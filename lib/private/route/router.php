@@ -85,9 +85,15 @@ class Router implements IRouter {
 	 */
 	protected $logger;
 
+	/**
+	 * @param ILogger $logger
+	 */
 	public function __construct(ILogger $logger) {
 		$this->logger = $logger;
-		$baseUrl = \OC_Helper::linkTo('', 'index.php');
+		$baseUrl = \OC::$WEBROOT;
+		if(!\OC::$server->getConfig()->getSystemValue('front_controller_active', false)) {
+			$baseUrl = \OC_Helper::linkTo('', 'index.php');
+		}
 		if (!\OC::$CLI) {
 			$method = $_SERVER['REQUEST_METHOD'];
 		} else {
