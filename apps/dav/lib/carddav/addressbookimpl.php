@@ -21,11 +21,35 @@
 
 namespace OCA\DAV\CardDAV;
 
-class AddressBookImpl implements \OCP\IAddressBook {
+use OCP\IAddressBook;
+use Sabre\VObject\Component\VCard;
+use Sabre\VObject\Property\Text;
+use Sabre\VObject\Reader;
+use Sabre\VObject\UUIDUtil;
 
-	public function __construct(array $values, CardDavBackend $backend) {
-		$this->values = $values;
+class AddressBookImpl implements IAddressBook {
+
+	/** @var CardDavBackend */
+	private $backend;
+
+	/** @var array */
+	private $addressBookInfo;
+
+	/** @var DbHandler */
+	private $dbHandler;
+
+	/**
+	 * AddressBookImpl constructor.
+	 *
+	 * @param array $addressBookInfo
+	 * @param CardDavBackend $backend
+	 * @param DbHandler $dbHandler
+	 */
+	public function __construct(array $addressBookInfo, CardDavBackend $backend, DbHandler $dbHandler) {
+		$this->addressBookInfo = $addressBookInfo;
 		$this->backend = $backend;
+		$this->dbHandler = $dbHandler;
+
 		/*
 		 * 				'id'  => $row['id'],
 				'uri' => $row['uri'],
@@ -42,7 +66,7 @@ class AddressBookImpl implements \OCP\IAddressBook {
 	 * @since 5.0.0
 	 */
 	public function getKey() {
-		return $this->values['id'];
+		return $this->addressBookInfo['id'];
 	}
 
 	/**
@@ -52,7 +76,7 @@ class AddressBookImpl implements \OCP\IAddressBook {
 	 * @since 5.0.0
 	 */
 	public function getDisplayName() {
-		return $this->values['{DAV:}displayname'];
+		return $this->addressBookInfo['{DAV:}displayname'];
 	}
 
 	/**
@@ -64,7 +88,7 @@ class AddressBookImpl implements \OCP\IAddressBook {
 	 */
 	public function search($pattern, $searchProperties, $options) {
 		// TODO: Implement search() method.
-		$cards = $this->backend->getCards($this->values['id']);
+		$cards = $this->backend->getCards($this->addressBookInfo['id']);
 
 		//
 		// TODO: search now
@@ -78,7 +102,33 @@ class AddressBookImpl implements \OCP\IAddressBook {
 	 * @since 5.0.0
 	 */
 	public function createOrUpdate($properties) {
-		// TODO: Implement createOrUpdate() method.
+		$update = false;
+		if (!isset($properties['UID'])) { // create a new contact
+			$uid = $this->createUid();
+			$uri = $uid . '.vcf';
+			$vCard = $this->createEmptyVCard($uid);
+		} else { // update existing contact
+			$uid = $properties['UID'];
+			$uri = $uid . '.vcf';
+			$vCardData = $this->backend->getCard($this->getKey(), $uri);
+			$vCard = Reader::read($vCardData['carddata']);
+			$update = true;
+		}
+
+		foreach ($properties as $key => $value) {
+			$vCard->$key = $vCard->createProperty($key, $value);
+		}
+
+		if ($update) {
+			$this->backend->updateCard($this->getKey(), $uri, $vCard->serialize());
+		} else {
+			$this->backend->createCard($this->getKey(), $uri, $vCard->serialize());
+		}
+
+		$this->dbHandler->updateProperties($this->getKey(), $uid, $properties);
+
+		// ToDo return array representing the contact
+
 	}
 
 	/**
@@ -95,6 +145,32 @@ class AddressBookImpl implements \OCP\IAddressBook {
 	 * @since 5.0.0
 	 */
 	public function delete($id) {
-		// TODO: Implement delete() method.
+		$uri = $this->dbHandler->getCardUri($id);
+		return $this->backend->deleteCard($this->addressBookInfo['id'], $uri);
+	}
+
+	/**
+	 * create UID for contact
+	 *
+	 * @return string
+	 */
+	protected function createUid() {
+		do {
+			$uid = UUIDUtil::getUUID();
+		} while (empty($this->dbHandler->getContact($uid . '.vcf')));
+
+		return $uid;
+	}
+
+	/**
+	 * create empty vcard
+	 *
+	 * @param string $uid
+	 * @return VCard
+	 */
+	protected function createEmptyVCard($uid) {
+		$vCard = new VCard();
+		$vCard->add(new Text($vCard, 'UID', $uid));
+		return $vCard;
 	}
 }
