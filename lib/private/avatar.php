@@ -71,7 +71,9 @@ class Avatar implements \OCP\IAvatar {
 			$avatar->loadFromData($this->view->file_get_contents('avatar.' . $size . '.' . $ext));
 		} else {
 			$avatar->loadFromData($this->view->file_get_contents('avatar.' . $ext));
-			$avatar->resize($size);
+			if ($size > 0) {
+				$avatar->resize($size);
+			}
 			$this->view->file_put_contents('avatar.' . $size . '.' . $ext, $avatar->data());
 		}
 		return $avatar;
