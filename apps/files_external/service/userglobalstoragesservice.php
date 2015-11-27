@@ -71,13 +71,14 @@ class UserGlobalStoragesService extends GlobalStoragesService {
 
 	protected function readDBConfig() {
 		$userMounts = $this->dbConfig->getAdminMountsFor(DBConfigService::APPLICABLE_TYPE_USER, $this->getUser()->getUID());
+		$globalMounts = $this->dbConfig->getAdminMountsFor(DBConfigService::APPLICABLE_TYPE_GLOBAL, null);
 		$groups = $this->groupManager->getUserGroupIds($this->getUser());
 		if (is_array($groups) && count($groups) !== 0) {
 			$groupMounts = $this->dbConfig->getAdminMountsForMultiple(DBConfigService::APPLICABLE_TYPE_GROUP, $groups);
 		} else {
 			$groupMounts = [];
 		}
-		return array_merge($userMounts, $groupMounts);
+		return array_merge($userMounts, $groupMounts, $globalMounts);
 	}
 
 	public function addStorage(StorageConfig $newStorage) {

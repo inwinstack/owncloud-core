@@ -221,6 +221,10 @@ abstract class StoragesService {
 			$this->dbConfig->setOption($configId, $key, $value);
 		}
 
+		if (count($newStorage->getApplicableUsers()) === 0 && count($newStorage->getApplicableGroups()) === 0) {
+			$this->dbConfig->addApplicable($configId, DBConfigService::APPLICABLE_TYPE_GLOBAL, null);
+		}
+
 		// add new storage
 		$allStorages[$configId] = $newStorage;
 
@@ -348,6 +352,13 @@ abstract class StoragesService {
 		$addedUsers = array_diff($updatedStorage->getApplicableUsers(), $oldStorage->getApplicableUsers());
 		$addedGroups = array_diff($updatedStorage->getApplicableGroups(), $oldStorage->getApplicableGroups());
 
+		$oldUserCount = count($oldStorage->getApplicableUsers());
+		$oldGroupCount = count($oldStorage->getApplicableGroups());
+		$newUserCount = count($oldStorage->getApplicableUsers());
+		$newGroupCount = count($oldStorage->getApplicableGroups());
+		$wasGlobal = ($oldUserCount + $oldGroupCount) === 0;
+		$isGlobal = ($newUserCount + $newGroupCount) === 0;
+
 		foreach ($removedUsers as $user) {
 			$this->dbConfig->removeApplicable($id, DBConfigService::APPLICABLE_TYPE_USER, $user);
 		}
@@ -359,6 +370,12 @@ abstract class StoragesService {
 		}
 		foreach ($addedGroups as $group) {
 			$this->dbConfig->addApplicable($id, DBConfigService::APPLICABLE_TYPE_GROUP, $group);
+		}
+
+		if ($wasGlobal && !$isGlobal) {
+			$this->dbConfig->removeApplicable($id, DBConfigService::APPLICABLE_TYPE_GLOBAL, null);
+		} else if (!$wasGlobal && $isGlobal) {
+			$this->dbConfig->addApplicable($id, DBConfigService::APPLICABLE_TYPE_GLOBAL, null);
 		}
 
 		$changedConfig = array_diff_assoc($updatedStorage->getBackendOptions(), $oldStorage->getBackendOptions());

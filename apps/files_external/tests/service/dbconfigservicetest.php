@@ -208,4 +208,15 @@ class DBConfigServiceTest extends TestCase {
 		$this->assertEquals($id3, $mounts[0]['mount_id']);
 		$this->assertEquals([['type' => DBConfigService::APPLICABLE_TYPE_USER, 'value' => 'test', 'mount_id' => $id3]], $mounts[0]['applicable']);
 	}
+
+	public function testGetAdminMountsForGlobal() {
+		$id1 = $this->addMount('/test', 'foo', 'bar', 100, DBConfigService::MOUNT_TYPE_ADMIN);
+
+		$this->dbConfig->addApplicable($id1, DBConfigService::APPLICABLE_TYPE_GLOBAL, null);
+
+		$mounts = $this->dbConfig->getAdminMountsFor(DBConfigService::APPLICABLE_TYPE_GLOBAL, null);
+		$this->assertCount(1, $mounts);
+		$this->assertEquals($id1, $mounts[0]['mount_id']);
+		$this->assertEquals([['type' => DBConfigService::APPLICABLE_TYPE_GLOBAL, 'value' => null, 'mount_id' => $id1]], $mounts[0]['applicable']);
+	}
 }

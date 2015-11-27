@@ -75,8 +75,14 @@ class DBConfigService {
 		$query = $builder->select(['m.mount_id', 'mount_point', 'storage_backend', 'auth_backend', 'priority', 'm.type'])
 			->from('external_mounts', 'm')
 			->innerJoin('m', 'external_applicable', 'a', 'm.mount_id = a.mount_id')
-			->where($builder->expr()->eq('a.type', $builder->createNamedParameter($type, \PDO::PARAM_INT)))
-			->andWhere($builder->expr()->eq('a.value', $builder->createNamedParameter($value, \PDO::PARAM_STR)));
+			->where($builder->expr()->eq('a.type', $builder->createNamedParameter($type, \PDO::PARAM_INT)));
+
+		if (is_null($value)) {
+			$query = $query->andWhere($builder->expr()->isNull('a.value'));
+		} else {
+			$query = $query->andWhere($builder->expr()->eq('a.value', $builder->createNamedParameter($value)));
+		}
+
 		return $query;
 	}
 
