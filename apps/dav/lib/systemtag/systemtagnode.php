@@ -75,7 +75,12 @@ class SystemTagNode implements \Sabre\DAV\INode {
 	 * @throws \Sabre\DAV\Exception\Forbidden
 	 */
 	public function setName($name) {
-		throw new \Sabre\DAV\Exception\Forbidden();
+		$parts = $this->parseName($name);
+		if (!$parts) {
+			// invalid compound name
+			throw new NotFound('Invalid compound tag name');
+		}
+		$this->tagManager->updateTag($this->tag->getId(), $parts[0], $parts[1], $parts[2]);
 	}
 
 	/**
@@ -93,6 +98,20 @@ class SystemTagNode implements \Sabre\DAV\INode {
 			// can happen if concurrent deletion occurred
 			throw new NotFound('Tag with id ' . $this->tag->getId() . ' not found', 0, $e);
 		}
+	}
+
+	private function parseName($name) {
+		$parts = explode('_', $name);
+		if (count($parts) !== 3) {
+			// invalid compound name
+			return null;
+		}
+
+		return [
+				$parts[0],
+				$parts[1] === '1',
+				$parts[2] === '1',
+		];
 	}
 
 }
