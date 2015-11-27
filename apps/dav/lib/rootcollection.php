@@ -30,6 +30,7 @@ class RootCollection extends SimpleCollection {
 		$caldavBackend = new CalDavBackend($db);
 		$calendarRoot = new CalendarRoot($principalBackend, $caldavBackend, 'principals/users');
 		$calendarRoot->disableListing = $disableListing;
+		$systemTagCollection = new SystemTag\RootCollection($principalBackend);
 
 		$cardDavBackend = new CardDavBackend(\OC::$server->getDatabaseConnection(), $principalBackend);
 
@@ -41,6 +42,7 @@ class RootCollection extends SimpleCollection {
 				$filesCollection,
 				$calendarRoot,
 				$addressBookRoot,
+				$systemTagCollection,
 		];
 
 		parent::__construct('root', $children);
