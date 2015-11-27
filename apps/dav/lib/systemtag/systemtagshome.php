@@ -22,6 +22,7 @@
 namespace OCA\DAV\SystemTag;
 
 use Sabre\DAV\SimpleCollection;
+use Sabre\HTTP\URLUtil;
 
 class SystemTagsHome extends SimpleCollection {
 
@@ -39,4 +40,10 @@ class SystemTagsHome extends SimpleCollection {
 		];
 		parent::__construct('root', $children);
 	}
+
+	function getName() {
+		list(,$name) = URLUtil::splitPath($this->principalInfo['uri']);
+		return $name;
+	}
+
 }
