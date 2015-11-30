@@ -30,6 +30,7 @@ use OCA\Files_external\Service\StoragesService;
 use OCA\Files_external\Service\UserLegacyStoragesService;
 use OCA\Files_external\Service\UserStoragesService;
 use OCP\IConfig;
+use OCP\IDBConnection;
 use OCP\IUserSession;
 
 class StorageMigrator {
@@ -54,30 +55,44 @@ class StorageMigrator {
 	private $config;
 
 	/**
+	 * @var IDBConnection
+	 */
+	private $connection;
+
+	/**
 	 * StorageMigrator constructor.
 	 *
 	 * @param BackendService $backendService
 	 * @param DBConfigService $dbConfig
 	 * @param IUserSession $userSession
 	 * @param IConfig $config
+	 * @param IDBConnection $connection
 	 */
 	public function __construct(
 		BackendService $backendService,
 		DBConfigService $dbConfig,
 		IUserSession $userSession,
-		IConfig $config
+		IConfig $config,
+		IDBConnection $connection
 	) {
 		$this->backendService = $backendService;
 		$this->dbConfig = $dbConfig;
 		$this->userSession = $userSession;
 		$this->config = $config;
+		$this->connection = $connection;
 	}
 
 	private function migrate(LegacyStoragesService $legacyService, StoragesService $storageService) {
 		$existingStorage = $legacyService->getAllStorages();
 
-		foreach ($existingStorage as $storage) {
-			$storageService->addStorage($storage);
+		$this->connection->beginTransaction();
+		try {
+			foreach ($existingStorage as $storage) {
+				$storageService->addStorage($storage);
+			}
+			$this->connection->commit();
+		} catch (\Exception $e) {
+			$this->connection->rollBack();
 		}
 	}
 
