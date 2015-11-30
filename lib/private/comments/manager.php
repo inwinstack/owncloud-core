@@ -131,14 +131,20 @@ class Manager implements ICommentsManager {
 	 * @param string $id the ID of the comment
 	 * @return IComment
 	 * @throws NotFoundException
+	 * @throws \InvalidArgumentException
 	 * @since 9.0.0
 	 */
 	public function get($id) {
+		$id = intval($id);
+		if($id === 0) {
+			throw new \InvalidArgumentException('IDs must be translatable to a number in this implementation.');
+		}
+
 		$qb = $this->dbConn->getQueryBuilder();
 		$resultStatement = $qb->select('*')
 			->from('comments')
 			->where($qb->expr()->eq('id', $qb->createParameter('id')))
-			->setParameter('id', $id)
+			->setParameter('id', $id, \PDO::PARAM_INT)
 			->execute();
 
 		$data = $resultStatement->fetch();

@@ -50,6 +50,12 @@ class Test_Comments_Manager extends Test\TestCase
 	public function testGetCommentNotFound() {
 		$manager = $this->getManager();
 		$this->setExpectedException('\OCP\Comments\NotFoundException');
+		$manager->get('22');
+	}
+
+	public function testGetCommentNotFoundInvalidInput() {
+		$manager = $this->getManager();
+		$this->setExpectedException('\InvalidArgumentException');
 		$manager->get('unexisting22');
 	}
 
@@ -97,6 +103,12 @@ class Test_Comments_Manager extends Test\TestCase
 	public function testGetTreeNotFound() {
 		$manager = $this->getManager();
 		$this->setExpectedException('\OCP\Comments\NotFoundException');
+		$manager->getTree('22');
+	}
+
+	public function testGetTreeNotFoundInvalidIpnut() {
+		$manager = $this->getManager();
+		$this->setExpectedException('\InvalidArgumentException');
 		$manager->getTree('unexisting22');
 	}
 
