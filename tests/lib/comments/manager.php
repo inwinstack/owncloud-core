@@ -113,19 +113,19 @@ class Test_Comments_Manager extends Test\TestCase
 	}
 
 	public function testGetTree() {
-		$this->addDatabaseEntry(0, 0);
+		$headId = $this->addDatabaseEntry(0, 0);
 
-		$this->addDatabaseEntry(1, 1, new \DateTime('-3 hours'));
-		$this->addDatabaseEntry(1, 1, new \DateTime('-2 hours'));
-		$id = $this->addDatabaseEntry(1, 1, new \DateTime('-1 hour'));
+		$this->addDatabaseEntry($headId, $headId, new \DateTime('-3 hours'));
+		$this->addDatabaseEntry($headId, $headId, new \DateTime('-2 hours'));
+		$id = $this->addDatabaseEntry($headId, $headId, new \DateTime('-1 hour'));
 
 		$manager = $this->getManager();
-		$tree = $manager->getTree('1');
+		$tree = $manager->getTree($headId);
 
 		// Verifying the root comment
 		$this->assertTrue(isset($tree['comment']));
 		$this->assertTrue($tree['comment'] instanceof \OCP\Comments\IComment);
-		$this->assertSame($tree['comment']->getId(), '1');
+		$this->assertSame($tree['comment']->getId(), strval($headId));
 		$this->assertTrue(isset($tree['replies']));
 		$this->assertSame(count($tree['replies']), 3);
 
@@ -142,7 +142,7 @@ class Test_Comments_Manager extends Test\TestCase
 		$id = $this->addDatabaseEntry(0, 0);
 
 		$manager = $this->getManager();
-		$tree = $manager->getTree('1');
+		$tree = $manager->getTree($id);
 
 		// Verifying the root comment
 		$this->assertTrue(isset($tree['comment']));
@@ -160,10 +160,10 @@ class Test_Comments_Manager extends Test\TestCase
 	public function testGetTreeWithLimitAndOffset() {
 		$headId = $this->addDatabaseEntry(0, 0);
 
-		$this->addDatabaseEntry(1, 1, new \DateTime('-3 hours'));
-		$this->addDatabaseEntry(1, 1, new \DateTime('-2 hours'));
-		$this->addDatabaseEntry(1, 1, new \DateTime('-1 hour'));
-		$idToVerify = $this->addDatabaseEntry(1, 1, new \DateTime());
+		$this->addDatabaseEntry($headId, $headId, new \DateTime('-3 hours'));
+		$this->addDatabaseEntry($headId, $headId, new \DateTime('-2 hours'));
+		$this->addDatabaseEntry($headId, $headId, new \DateTime('-1 hour'));
+		$idToVerify = $this->addDatabaseEntry($headId, $headId, new \DateTime());
 
 		$manager = $this->getManager();
 
@@ -326,10 +326,10 @@ class Test_Comments_Manager extends Test\TestCase
 		$done = $manager->delete('');
 		$this->assertFalse($done);
 
-		$this->addDatabaseEntry(0, 0);
-		$comment = $manager->get('1');
+		$id = $this->addDatabaseEntry(0, 0);
+		$comment = $manager->get($id);
 		$this->assertTrue($comment instanceof \OCP\Comments\IComment);
-		$done = $this->getManager()->delete('1');
+		$done = $this->getManager()->delete($id);
 		$this->assertTrue($done);
 		$this->setExpectedException('\OCP\Comments\NotFoundException');
 		$manager->get('1');
@@ -408,7 +408,7 @@ class Test_Comments_Manager extends Test\TestCase
 			$comment
 					->setActor('user', 'alice')
 					->setObject('file', 'file64')
-					->setParentId('1')
+					->setParentId(strval($id))
 					->setMessage('full ack')
 					->setVerb('comment')
 					// setting the creation time avoids using sleep() while making sure to test with different timestamps
