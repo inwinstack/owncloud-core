@@ -240,7 +240,7 @@ class Checker {
 		$rsa->setSignatureMode(RSA::SIGNATURE_PSS);
 		$rsa->setMGFHash('sha512');
 		if(!$rsa->verify(json_encode($expectedHashes), $signature)) {
-			throw new InvalidSignatureException('Signature could not get verified.');
+			throw new InvalidSignatureException('Signature could not be verified.');
 		}
 
 		// Compare the list of files which are not identical

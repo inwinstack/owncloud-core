@@ -193,7 +193,7 @@ class CheckerTest extends TestCase {
 		$expected = [
 				'EXCEPTION' => [
 						'class' => 'OC\\IntegrityCheck\\Exceptions\\InvalidSignatureException',
-						'message' => 'Signature could not get verified.',
+						'message' => 'Signature could not be verified.',
 				],
 		];
 		$this->assertEquals($expected, $this->checker->verifyAppSignature('SomeApp'));
@@ -452,7 +452,7 @@ class CheckerTest extends TestCase {
 		$expected = [
 				'EXCEPTION' => [
 						'class' => 'OC\\IntegrityCheck\\Exceptions\\InvalidSignatureException',
-						'message' => 'Signature could not get verified.',
+						'message' => 'Signature could not be verified.',
 				]
 		];
 		$this->assertSame($expected, $this->checker->verifyCoreSignature());
