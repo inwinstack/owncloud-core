@@ -2,6 +2,7 @@
 
 namespace OC\Comments;
 
+use OC\Hooks\Emitter;
 use OCP\Comments\IComment;
 use OCP\Comments\ICommentsManager;
 use OCP\Comments\NotFoundException;
@@ -12,8 +13,15 @@ class Manager implements ICommentsManager {
 	/** @var  IDBConnection */
 	protected $dbConn;
 
-	public function __construct(IDBConnection $dbConn) {
+	public function __construct(
+			IDBConnection $dbConn,
+			Emitter $userManager
+	) {
 		$this->dbConn = $dbConn;
+		$userManager->listen('\OC\User', 'postDelete', function($user) {
+			/** @var \OCP\IUser $user */
+			$this->deleteReferencesOfActor('user', $user->getUid());
+		});
 	}
 
 	/**

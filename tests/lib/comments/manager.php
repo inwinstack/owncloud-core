@@ -469,6 +469,26 @@ class Test_Comments_Manager extends Test\TestCase
 		$this->assertTrue($wasSuccessful);
 	}
 
+	public function testDeleteReferencesOfActorWithUserManagement() {
+		$user = \oc::$server->getUserManager()->createUser('xenia', '123456');
+		$this->assertTrue($user instanceof \OCP\IUser);
+
+		$manager = $this->getManager();
+		$comment = $manager->create('user', $user->getUID(), 'files', 'file64');
+		$comment
+			->setMessage('Most important comment I ever left on the Internet.')
+			->setVerb('comment');
+		$status = $manager->save($comment);
+		$this->assertTrue($status);
+
+		$commentID = $comment->getId();
+		$user->delete();
+
+		$comment =$manager->get($commentID);
+		$this->assertSame($comment->getActorType(), \OCP\Comments\ICommentsManager::DELETED_USER);
+		$this->assertSame($comment->getActorId(), \OCP\Comments\ICommentsManager::DELETED_USER);
+	}
+
 	public function invalidObjectArgsProvider() {
 		return
 				[
