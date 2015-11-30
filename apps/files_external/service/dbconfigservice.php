@@ -260,6 +260,9 @@ class DBConfigService {
 		$options = $this->getOptionsForMounts($mountIds);
 
 		return array_map(function ($mount, $applicable, $config, $options) {
+			$mount['id'] = (int)$mount['id'];
+			$mount['type'] = (int)$mount['type'];
+			$mount['priority'] = (int)$mount['priority'];
 			$mount['applicable'] = $applicable;
 			$mount['config'] = $config;
 			$mount['options'] = $options;

@@ -84,7 +84,7 @@ abstract class StoragesService {
 				array_values($applicableGroups),
 				$mount['priority']
 			);
-			$config->setId($mount['mount_id']);
+			$config->setId((int)$mount['mount_id']);
 			return $config;
 		} catch (\UnexpectedValueException $e) {
 			// dont die if a storage backend doesn't exist
