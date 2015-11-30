@@ -12,7 +12,7 @@ class Test_Comments_Manager extends Test\TestCase
 		\oc::$server->getDatabaseConnection()->prepare($sql)->execute();
 	}
 
-	protected function addDatabaseEntry($id, $parentId, $topmostParentId, $creationDT = null, $latestChildDT = null) {
+	protected function addDatabaseEntry($parentId, $topmostParentId, $creationDT = null, $latestChildDT = null) {
 		if(is_null($creationDT)) {
 			$creationDT = new \DateTime();
 		}
@@ -23,13 +23,13 @@ class Test_Comments_Manager extends Test\TestCase
 		$sql = '
 			INSERT INTO `*PREFIX*comments`
 			(
-				id, parent_id, topmost_parent_id, children_count,
+				parent_id, topmost_parent_id, children_count,
 				actor_type, actor_id, message, verb, object_type, object_id,
 				creation_timestamp, latest_child_timestamp
 			)
 			VALUES
 			(
-				"' . $id . '", "' . $parentId . '", "' . $topmostParentId . '", "2",
+				"' . $parentId . '", "' . $topmostParentId . '", "2",
 				"user", "alice", "nice one", "comment", "file", "file64",
 				?, ?
 			)
@@ -38,6 +38,8 @@ class Test_Comments_Manager extends Test\TestCase
 		$stmt->bindValue(1, $creationDT, 'datetime');
 		$stmt->bindValue(2, $latestChildDT, 'datetime');
 		$stmt->execute();
+
+		return \oc::$server->getDatabaseConnection()->lastInsertId('comments');
 	}
 
 	protected function getManager() {
@@ -99,11 +101,11 @@ class Test_Comments_Manager extends Test\TestCase
 	}
 
 	public function testGetTree() {
-		$this->addDatabaseEntry(1, 0, 0);
+		$this->addDatabaseEntry(0, 0);
 
-		$this->addDatabaseEntry(2, 1, 1, new \DateTime('-3 hours'));
-		$this->addDatabaseEntry(3, 1, 1, new \DateTime('-2 hours'));
-		$this->addDatabaseEntry(4, 1, 1, new \DateTime('-1 hour'));
+		$this->addDatabaseEntry(1, 1, new \DateTime('-3 hours'));
+		$this->addDatabaseEntry(1, 1, new \DateTime('-2 hours'));
+		$id = $this->addDatabaseEntry(1, 1, new \DateTime('-1 hour'));
 
 		$manager = $this->getManager();
 		$tree = $manager->getTree('1');
@@ -116,7 +118,6 @@ class Test_Comments_Manager extends Test\TestCase
 		$this->assertSame(count($tree['replies']), 3);
 
 		// one level deep
-		$id = 4;
 		foreach($tree['replies'] as $reply) {
 			$this->assertTrue($reply['comment'] instanceof \OCP\Comments\IComment);
 			$this->assertSame($reply['comment']->getId(), strval($id));
@@ -126,7 +127,7 @@ class Test_Comments_Manager extends Test\TestCase
 	}
 
 	public function testGetTreeNoReplies() {
-		$this->addDatabaseEntry(1, 0, 0);
+		$id = $this->addDatabaseEntry(0, 0);
 
 		$manager = $this->getManager();
 		$tree = $manager->getTree('1');
@@ -134,7 +135,7 @@ class Test_Comments_Manager extends Test\TestCase
 		// Verifying the root comment
 		$this->assertTrue(isset($tree['comment']));
 		$this->assertTrue($tree['comment'] instanceof \OCP\Comments\IComment);
-		$this->assertSame($tree['comment']->getId(), '1');
+		$this->assertSame($tree['comment']->getId(), strval($id));
 		$this->assertTrue(isset($tree['replies']));
 		$this->assertSame(count($tree['replies']), 0);
 
@@ -145,23 +146,22 @@ class Test_Comments_Manager extends Test\TestCase
 	}
 
 	public function testGetTreeWithLimitAndOffset() {
-		$this->addDatabaseEntry(1, 0, 0);
+		$headId = $this->addDatabaseEntry(0, 0);
 
-		$this->addDatabaseEntry(2, 1, 1, new \DateTime('-3 hours'));
-		$this->addDatabaseEntry(3, 1, 1, new \DateTime('-2 hours'));
-		$this->addDatabaseEntry(4, 1, 1, new \DateTime('-1 hour'));
-		$this->addDatabaseEntry(5, 1, 1, new \DateTime());
+		$this->addDatabaseEntry(1, 1, new \DateTime('-3 hours'));
+		$this->addDatabaseEntry(1, 1, new \DateTime('-2 hours'));
+		$this->addDatabaseEntry(1, 1, new \DateTime('-1 hour'));
+		$idToVerify = $this->addDatabaseEntry(1, 1, new \DateTime());
 
 		$manager = $this->getManager();
-		$idToVerify = 5;
 
 		for ($offset = 0; $offset < 3; $offset += 2) {
-			$tree = $manager->getTree('1', 2, $offset);
+			$tree = $manager->getTree(strval($headId), 2, $offset);
 
 			// Verifying the root comment
 			$this->assertTrue(isset($tree['comment']));
 			$this->assertTrue($tree['comment'] instanceof \OCP\Comments\IComment);
-			$this->assertSame($tree['comment']->getId(), '1');
+			$this->assertSame($tree['comment']->getId(), strval($headId));
 			$this->assertTrue(isset($tree['replies']));
 			$this->assertSame(count($tree['replies']), 2);
 
@@ -176,7 +176,7 @@ class Test_Comments_Manager extends Test\TestCase
 	}
 
 	public function testGetForObject() {
-		$this->addDatabaseEntry(1, 0, 0);
+		$this->addDatabaseEntry(0, 0);
 
 		$manager = $this->getManager();
 		$comments = $manager->getForObject('file', 'file64');
@@ -188,16 +188,15 @@ class Test_Comments_Manager extends Test\TestCase
 	}
 
 	public function testGetForObjectWithLimitAndOffset() {
-		$this->addDatabaseEntry(1, 0, 0, new \DateTime('-6 hours'));
-		$this->addDatabaseEntry(2, 0, 0, new \DateTime('-5 hours'));
-		$this->addDatabaseEntry(3, 1, 1, new \DateTime('-4 hours'));
-		$this->addDatabaseEntry(4, 0, 0, new \DateTime('-3 hours'));
-		$this->addDatabaseEntry(5, 2, 2, new \DateTime('-2 hours'));
-		$this->addDatabaseEntry(6, 2, 2, new \DateTime('-1 hours'));
-		$this->addDatabaseEntry(7, 3, 1, new \DateTime());
+		$this->addDatabaseEntry(0, 0, new \DateTime('-6 hours'));
+		$this->addDatabaseEntry(0, 0, new \DateTime('-5 hours'));
+		$this->addDatabaseEntry(1, 1, new \DateTime('-4 hours'));
+		$this->addDatabaseEntry(0, 0, new \DateTime('-3 hours'));
+		$this->addDatabaseEntry(2, 2, new \DateTime('-2 hours'));
+		$this->addDatabaseEntry(2, 2, new \DateTime('-1 hours'));
+		$idToVerify = $this->addDatabaseEntry(3, 1, new \DateTime());
 
 		$manager = $this->getManager();
-		$idToVerify = 7;
 		$offset = 0;
 		do {
 			$comments = $manager->getForObject('file', 'file64', 3, $offset);
@@ -214,30 +213,29 @@ class Test_Comments_Manager extends Test\TestCase
 	}
 
 	public function testGetForObjectWithDateTimeConstraint() {
-		$this->addDatabaseEntry(1, 0, 0, new \DateTime('-6 hours'));
-		$this->addDatabaseEntry(2, 0, 0, new \DateTime('-5 hours'));
-		$this->addDatabaseEntry(3, 0, 0, new \DateTime('-3 hours'));
-		$this->addDatabaseEntry(4, 2, 2, new \DateTime('-2 hours'));
+		$this->addDatabaseEntry(0, 0, new \DateTime('-6 hours'));
+		$this->addDatabaseEntry(0, 0, new \DateTime('-5 hours'));
+		$id1 = $this->addDatabaseEntry(0, 0, new \DateTime('-3 hours'));
+		$id2 = $this->addDatabaseEntry(2, 2, new \DateTime('-2 hours'));
 
 		$manager = $this->getManager();
 		$comments = $manager->getForObject('file', 'file64', 0, 0, new \DateTime('-4 hours'));
 
 		$this->assertSame(count($comments), 2);
-		$this->assertSame($comments[0]->getId(), '4');
-		$this->assertSame($comments[1]->getId(), '3');
+		$this->assertSame($comments[0]->getId(), strval($id2));
+		$this->assertSame($comments[1]->getId(), strval($id1));
 	}
 
 	public function testGetForObjectWithLimitAndOffsetAndDateTimeConstraint() {
-		$this->addDatabaseEntry(1, 0, 0, new \DateTime('-7 hours'));
-		$this->addDatabaseEntry(2, 0, 0, new \DateTime('-6 hours'));
-		$this->addDatabaseEntry(3, 1, 1, new \DateTime('-5 hours'));
-		$this->addDatabaseEntry(4, 0, 0, new \DateTime('-3 hours'));
-		$this->addDatabaseEntry(5, 2, 2, new \DateTime('-2 hours'));
-		$this->addDatabaseEntry(6, 2, 2, new \DateTime('-1 hours'));
-		$this->addDatabaseEntry(7, 3, 1, new \DateTime());
+		$this->addDatabaseEntry(0, 0, new \DateTime('-7 hours'));
+		$this->addDatabaseEntry(0, 0, new \DateTime('-6 hours'));
+		$this->addDatabaseEntry(1, 1, new \DateTime('-5 hours'));
+		$this->addDatabaseEntry(0, 0, new \DateTime('-3 hours'));
+		$this->addDatabaseEntry(2, 2, new \DateTime('-2 hours'));
+		$this->addDatabaseEntry(2, 2, new \DateTime('-1 hours'));
+		$idToVerify = $this->addDatabaseEntry(3, 1, new \DateTime());
 
 		$manager = $this->getManager();
-		$idToVerify = 7;
 		$offset = 0;
 		do {
 			$comments = $manager->getForObject('file', 'file64', 3, $offset, new \DateTime('-4 hours'));
@@ -256,7 +254,7 @@ class Test_Comments_Manager extends Test\TestCase
 
 	public function testGetNumberOfCommentsForObject() {
 		for($i = 1; $i < 5; $i++) {
-			$this->addDatabaseEntry($i, 0, 0);
+			$this->addDatabaseEntry(0, 0);
 		}
 
 		$manager = $this->getManager();
@@ -316,7 +314,7 @@ class Test_Comments_Manager extends Test\TestCase
 		$done = $manager->delete('');
 		$this->assertFalse($done);
 
-		$this->addDatabaseEntry(1, 0, 0);
+		$this->addDatabaseEntry(0, 0);
 		$comment = $manager->get('1');
 		$this->assertTrue($comment instanceof \OCP\Comments\IComment);
 		$done = $this->getManager()->delete('1');
@@ -389,7 +387,7 @@ class Test_Comments_Manager extends Test\TestCase
 	}
 
 	public function testSaveAsChild() {
-		$this->addDatabaseEntry(1, 0, 0);
+		$id = $this->addDatabaseEntry(0, 0);
 
 		$manager = $this->getManager();
 
@@ -406,8 +404,8 @@ class Test_Comments_Manager extends Test\TestCase
 
 			$manager->save($comment);
 
-			$this->assertSame($comment->getTopmostParentId(), '1');
-			$parentComment = $manager->get('1');
+			$this->assertSame($comment->getTopmostParentId(), strval($id));
+			$parentComment = $manager->get(strval($id));
 			$this->assertSame($parentComment->getChildrenCount(), $i + 1);
 			$this->assertEquals($parentComment->getLatestChildDateTime(), $comment->getCreationDateTime());
 		}
@@ -432,21 +430,22 @@ class Test_Comments_Manager extends Test\TestCase
 	}
 
 	public function testDeleteReferencesOfActor() {
-		$this->addDatabaseEntry(1, 0, 0);
-		$this->addDatabaseEntry(2, 0, 0);
-		$this->addDatabaseEntry(3, 0, 0);
+		$ids = [];
+		$ids[] = $this->addDatabaseEntry(0, 0);
+		$ids[] = $this->addDatabaseEntry(0, 0);
+		$ids[] = $this->addDatabaseEntry(0, 0);
 
 		$manager = $this->getManager();
 
 		// just to make sure they are really set, with correct actor data
-		$comment = $manager->get('2');
+		$comment = $manager->get(strval($ids[1]));
 		$this->assertSame($comment->getActorType(), 'user');
 		$this->assertSame($comment->getActorId(), 'alice');
 
 		$wasSuccessful = $manager->deleteReferencesOfActor('user', 'alice');
 		$this->assertTrue($wasSuccessful);
 
-		for($id = 1; $id <= 3; $id++) {
+		foreach($ids as $id) {
 			$comment = $manager->get(strval($id));
 			$this->assertSame($comment->getActorType(), ICommentsManager::DELETED_USER);
 			$this->assertSame($comment->getActorId(), ICommentsManager::DELETED_USER);
@@ -477,14 +476,15 @@ class Test_Comments_Manager extends Test\TestCase
 	}
 
 	public function testDeleteCommentsAtObject() {
-		$this->addDatabaseEntry(1, 0, 0);
-		$this->addDatabaseEntry(2, 0, 0);
-		$this->addDatabaseEntry(3, 0, 0);
+		$ids = [];
+		$ids[] = $this->addDatabaseEntry(0, 0);
+		$ids[] = $this->addDatabaseEntry(0, 0);
+		$ids[] = $this->addDatabaseEntry(0, 0);
 
 		$manager = $this->getManager();
 
 		// just to make sure they are really set, with correct actor data
-		$comment = $manager->get('2');
+		$comment = $manager->get(strval($ids[1]));
 		$this->assertSame($comment->getObjectType(), 'file');
 		$this->assertSame($comment->getObjectId(), 'file64');
 
@@ -492,7 +492,7 @@ class Test_Comments_Manager extends Test\TestCase
 		$this->assertTrue($wasSuccessful);
 
 		$verified = 0;
-		for($id = 1; $id <= 3; $id++) {
+		foreach($ids as $id) {
 			try {
 				$manager->get(strval($id));
 			} catch (\OCP\Comments\NotFoundException $e) {
