@@ -50,7 +50,7 @@ class Manager implements ICommentsManager {
 
 		if($comment->getId() === '') {
 			$comment->setChildrenCount(0);
-			$comment->setLatestChildDateTime(new \DateTime('0000-00-00'));
+			$comment->setLatestChildDateTime(new \DateTime('0000-00-00 00:00', new \DateTimeZone('UTC')));
 		}
 
 		if(is_null($comment->getCreationDateTime())) {
