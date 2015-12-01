@@ -13,14 +13,30 @@ class Manager implements ICommentsManager {
 	/** @var  IDBConnection */
 	protected $dbConn;
 
+	/** @var array list of files being deleted. key is path, value is ID */
+	protected $deleteList = [];
+
 	public function __construct(
 			IDBConnection $dbConn,
-			Emitter $userManager
+			Emitter $userManager,
+			Emitter $rootFolder
 	) {
 		$this->dbConn = $dbConn;
 		$userManager->listen('\OC\User', 'postDelete', function($user) {
 			/** @var \OCP\IUser $user */
 			$this->deleteReferencesOfActor('user', $user->getUid());
+		});
+		$rootFolder->listen('\OC\Files', 'preDelete', function($node) {
+			/** @var \OCP\Files\Node $node */
+			$this->deleteList[$node->getPath()] = strval($node->getId());
+		});
+		$rootFolder->listen('\OC\Files', 'postDelete', function($node) {
+			/** @var \OCP\Files\Node $node */
+			if(isset($this->deleteList[$node->getPath()])) {
+				// hackish and possibly unreliable. What if a file is deleted without the preDelete hook?
+				$this->deleteCommentsAtObject('file', $this->deleteList[$node->getPath()]);
+				unset($this->deleteList[$node->getPath()]);
+			}
 		});
 	}
 
@@ -152,7 +168,7 @@ class Manager implements ICommentsManager {
 		$resultStatement = $qb->select('*')
 			->from('comments')
 			->where($qb->expr()->eq('id', $qb->createParameter('id')))
-			->setParameter('id', $id, \PDO::PARAM_INT)
+			->setParameter('id', $id)
 			->execute();
 
 		$data = $resultStatement->fetch();

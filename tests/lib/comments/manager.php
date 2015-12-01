@@ -474,7 +474,7 @@ class Test_Comments_Manager extends Test\TestCase
 		$this->assertTrue($user instanceof \OCP\IUser);
 
 		$manager = $this->getManager();
-		$comment = $manager->create('user', $user->getUID(), 'files', 'file64');
+		$comment = $manager->create('user', $user->getUID(), 'file', 'file64');
 		$comment
 			->setMessage('Most important comment I ever left on the Internet.')
 			->setVerb('comment');
@@ -537,6 +537,45 @@ class Test_Comments_Manager extends Test\TestCase
 		// we still expect to get true back
 		$wasSuccessful = $manager->deleteCommentsAtObject('file', 'file64');
 		$this->assertTrue($wasSuccessful);
+	}
+
+	public function testDeleteCommentsAtObjectWithFile() {
+		$user = \oc::$server->getUserManager()->createUser('xenia', '123456');
+		$this->assertTrue($user instanceof \OCP\IUser);
+
+		$userFolder = \oc::$server->getUserFolder($user->getUID());
+		$file = $userFolder->newFile('shoppinglist.txt');
+		$fileId =  strval($file->getId());
+
+		$manager = $this->getManager();
+		$comment = $manager->create('user', $user->getUID(), 'file', $fileId);
+		$comment
+				->setMessage('Remember the toothpaste.')
+				->setVerb('comment');
+		$status = $manager->save($comment);
+		$user->delete();
+		$this->assertTrue($status);
+
+		$commentId = $comment->getId();
+
+		$comments = $manager->getForObject('file', $fileId);
+		$this->assertTrue(count($comments) === 1);
+		$this->assertSame($comments[0]->getObjectId(), $fileId);
+		$this->assertSame($comments[0]->getId(), $commentId);
+
+		$file->delete();
+
+		$isDeleted = false;
+		try {
+			$manager->get($commentId);
+		} catch (\OCP\Comments\NotFoundException $e) {
+			$isDeleted = true;
+		}
+		$this->assertTrue($isDeleted);
+
+		$comments = $manager->getForObject('file', $fileId);
+		$this->assertTrue(count($comments) === 0);
+
 	}
 
 	public function testOverwriteDefaultManager() {
