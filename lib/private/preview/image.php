@@ -51,6 +51,11 @@ abstract class Image extends Provider {
 		} else {
 			$fileName = $fileview->getLocalFile($path);
 		}
+                $systemConfig = \OC::$server->getSystemConfig();
+                $localStorageType = $systemConfig->getValue("localstoragetype","Local");
+		if ($localStorageType != 'Local'){
+		    $fileName = 'localceph://'.$fileName;
+		}
 		$image->loadFromFile($fileName);
 		$image->fixOrientation();
 		if ($image->valid()) {
