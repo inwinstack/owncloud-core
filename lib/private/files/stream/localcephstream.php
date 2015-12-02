@@ -102,6 +102,8 @@ class LocalCephStream {
     
     /* =====Consul Parameters===== */
     private $consul;
+    private $systemConfig;
+    private $sessionID;
     
     /**
      * @var int $maxReTrycount The max failed count can tolerate to execute consul rest api.
@@ -229,36 +231,7 @@ class LocalCephStream {
             self::$connectionCountArray[$reqId] = 1 ;
         }
         
-        // Initial Consul instance.
-        $this->consul = new \OCP\ConsulUtil();
-        $this->consul -> init();
         
-        
-        // Get localhost consul session.
-        $this->systemConfig = \OC::$server->getSystemConfig();
-        
-        // If localhost session not saved in config file or session not vaild,
-        // will to create or renew localhost session.
-        if (!$this->systemConfig->getValue("localhostsession", false)) {
-        
-            $renewLocalhostSessionIDResult = $this->renewLocalhostSessionID();
-        
-            if (!$renewLocalhostSessionIDResult ||
-                $renewLocalhostSessionIDResult['httpCode'] != 200){
-                
-                return false;
-            }
-            else{
-                $this->sessionID = $renewLocalhostSessionIDResult['result'][0]['ID'];
-            }
-        }
-        else{
-            $this->sessionID = $this->systemConfig->getValue("localhostsession", false);
-        }
-        
-        if (!$this->sessionID){
-            return false;
-        }
     }
 
     public function __destruct() {
@@ -284,6 +257,9 @@ class LocalCephStream {
             LocalCephStream::$radosIoctx = null;
             LocalCephStream::$rados = null;
             self::$connectionCountArray = null;
+            $this->consul = null;
+            $this->systemConfig = null;
+            $this->sessionID = null;
         }
  
     }
@@ -541,15 +517,7 @@ class LocalCephStream {
             $this->cache = '';
         }
     }
-    
-    private function getFSAcquireLock($dirOid){
-        $lockResult = $this->consul -> createKeyValue(md5($dirOid),'',$this->sessionID);
-        if ($lockResult['httpCode'] != 200){
-            return false;
-        }
-        return $lockResult['result'];
-    }
-    
+
     /**
      * Update upper folder metadata info.
      * 
@@ -1371,7 +1339,41 @@ class LocalCephStream {
      */
     public function stream_lock($operation)
     {       
-        
+
+        // Initial Consul instance.
+
+        if(!isset($this->consul)){
+            $this->consul = new \OCP\ConsulUtil();
+            $this->consul -> init();
+        }
+ 
+        // Get localhost consul session.
+        if(!isset($this->systemConfig)){
+            $this->systemConfig = \OC::$server->getSystemConfig();
+
+            // If localhost session not saved in config file or session not vaild,
+            // will to create or renew localhost session.
+            if (!$this->systemConfig->getValue("localhostsession", false)) {
+
+                $renewLocalhostSessionIDResult = $this->renewLocalhostSessionID();
+
+                if (!$renewLocalhostSessionIDResult ||
+                        $renewLocalhostSessionIDResult['httpCode'] != 200){
+
+                    return false;
+                }
+                else{
+                    $this->sessionID = $renewLocalhostSessionIDResult['result'][0]['ID'];
+                }
+            }
+            else{
+                $this->sessionID = $this->systemConfig->getValue("localhostsession", false);
+            }
+
+            if (!$this->sessionID){
+                return false;
+            }
+        }
         $this->hostName == gethostname();
 
         if (substr($this->oid,0) != '/'){
@@ -1380,10 +1382,10 @@ class LocalCephStream {
         else{
             $this->fileId = $this->oid;
         }
-        
+
         $this->fileId = md5($this->oid);
         $getfileLockStatus = $this->consul -> getKeyValue($this->fileId);
-  
+
         $getFileHttpCode = $getfileLockStatus['httpCode'];
         if ($getFileHttpCode == 404){
             $currentLock =  LOCK_UN;
@@ -1392,7 +1394,7 @@ class LocalCephStream {
             $this->getMyPid = $reqId;
 
             $this->hostName = gethostname(); 
-                
+  
         }elseif($getFileHttpCode == 200){
             $value = json_decode(base64_decode($getfileLockStatus['result'][0]['Value']),true);
             $currentLock =  $value['locktype'];

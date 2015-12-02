@@ -107,7 +107,7 @@ if (\OC_Util::runningOnWindows()) {
 		public function stat($path) {
 		    clearstatcache();
 		    $path = $this->getSourcePath($path);
-		    $result = stat('localceph://'.$path);
+		    $result = @stat('localceph://'.$path);
 		    return $result;
 		}
 		
@@ -120,7 +120,7 @@ if (\OC_Util::runningOnWindows()) {
 		    if ($this->is_dir($path)) {
 		        return 0;
 		    }
-		    return filesize('localceph://'.$this->getSourcePath($path));
+		    return @filesize('localceph://'.$this->getSourcePath($path));
 		}
 		
 		public function isReadable($path) {
