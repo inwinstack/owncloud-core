@@ -129,13 +129,20 @@ class OC_FileChunking {
 	    $count = 1;
 	    $cacheFullPath = array();
 
-	    $localFilePath = \OC\Files\Filesystem::normalizePath(\OC\Files\Filesystem::getView()->getLocalFile($filePath));
+            $systemConfig = \OC::$server->getSystemConfig();
+	    $localStorageType = $systemConfig->getValue("localstoragetype","Local");
 
+	    if ($localStorageType != 'Local'){
+	        $localFilePath = \OC\Files\Filesystem::getView()->getLocalFile($filePath);
+	    }
+	    else{
+	        $localFilePath = \OC\Files\Filesystem::normalizePath(\OC\Files\Filesystem::getView()->getLocalFile($filePath));
+	    }
 	    for ($i = 0; $i < $this->info['chunkcount']; $i++) {
 
 	        $dataDir = LocalCephStream::getDataDir();
 
-	        $cachePath = 'localceph://'.$cache->getLocalFile($prefix.$i);
+	        $cachePath = $cache->getLocalFile($prefix.$i);
 
 	        $cacheFullPath[] = $cachePath;
 

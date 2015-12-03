@@ -75,65 +75,65 @@ if (\OC_Util::runningOnWindows()) {
 		}
 
 		public function mkdir($path) {
-			return @mkdir('localceph://'.$this->getSourcePath($path), 0777, true);
+			return @mkdir($this->getSourcePath($path), 0777, true);
 
 		}
 
 		public function rmdir($path) {
 		    $path = $this->getSourcePath($path);
 
-		    return rmdir('localceph://'.$path);
+		    return rmdir($path);
 		}
 
 		public function opendir($path) {
 
 		    $path = $this->getSourcePath($path);
 		    try {
-        		return opendir('localceph://'.$path);
+                        return opendir($path);
 		    } catch (Exception $e) {
-		        \OCP\Util::logException('files_external', $e);
+		        \OCP\Util::logException('localceph', $e);
 		        return false;
 		    }
 		}
 		
 		public function is_dir($path) {
-		    return is_dir('localceph://'.$this->getSourcePath($path));
+		    return is_dir($this->getSourcePath($path));
 		}
 		
 		public function is_file($path) {
-		    return is_file('localceph://'.$this->getSourcePath($path));
+		    return is_file($this->getSourcePath($path));
 		}
 		
 		public function stat($path) {
 		    clearstatcache();
 		    $path = $this->getSourcePath($path);
-		    $result = @stat('localceph://'.$path);
+		    $result = @stat($path);
 		    return $result;
 		}
 		
 		public function filetype($path) {
 		    $path = $this->getSourcePath($path);
-		    return @filetype('localceph://'.$path);
+		    return @filetype($path);
 		}
 		
 		public function filesize($path) {
 		    if ($this->is_dir($path)) {
 		        return 0;
 		    }
-		    return @filesize('localceph://'.$this->getSourcePath($path));
+		    return @filesize($this->getSourcePath($path));
 		}
 		
 		public function isReadable($path) {
-		    return is_readable('localceph://'.$this->getSourcePath($path));
+		    return is_readable($this->getSourcePath($path));
 		}
 		
 		public function isUpdatable($path) {
-		    return is_writable('localceph://'.$this->getSourcePath($path));
+		    return is_writable($this->getSourcePath($path));
 		}
 		
 		public function file_exists($path) {
 		    clearstatcache($this->getSourcePath($path));
-		    return file_exists('localceph://'.$this->getSourcePath($path));
+		    return file_exists($this->getSourcePath($path));
 		}
 		
 		public function filemtime($path) {
@@ -144,9 +144,12 @@ if (\OC_Util::runningOnWindows()) {
 		public function touch($path, $mtime = null) {
 		    try {
 		        if (!is_null($mtime)) {
-		                $result = touch('localceph://'.$this->getSourcePath($path), $mtime);
+                                if ($this->filetype($path) == 'dir'){
+		                    $path = $path.'/';
+		                }
+		                $result = touch($this->getSourcePath($path), $mtime);
 		        } else {
-		            $result = touch('localceph://'.$this->getSourcePath($path));
+		            $result = touch($this->getSourcePath($path));
 		        }
 	            if ($result) {
 	                clearstatcache(true, $this->getSourcePath($path));
@@ -159,11 +162,11 @@ if (\OC_Util::runningOnWindows()) {
 		}
 		
 		public function file_get_contents($path) {
-		    return file_get_contents('localceph://'.$this->getSourcePath($path));
+		    return file_get_contents($this->getSourcePath($path));
 		}
 		    
         public function file_put_contents($path, $data) {
-            return file_put_contents('localceph://'.$this->getSourcePath($path), $data);
+            return file_put_contents($this->getSourcePath($path), $data);
         }
         
         public function unlink($path) {
@@ -172,24 +175,24 @@ if (\OC_Util::runningOnWindows()) {
             }
             try {
                 $path = $this->getSourcePath($path);
-                unlink('localceph://'.$path);
+                unlink($path);
             } catch (Exception $e) {
-                \OCP\Util::logException('files_external', $e);
+                \OCP\Util::logException('localceph', $e);
                 return false;
             }
             return true;
         }
         
         public function rename($path1, $path2) {
-            return rename('localceph://'.$this->getSourcePath($path1), 'localceph://'.$this->getSourcePath($path2));
+            return rename($this->getSourcePath($path1), $this->getSourcePath($path2));
         }
         
         public function copy($path1, $path2) {
             if ($this->is_dir($path1)) {
                 $this->remove($path2);
-                return copy('localceph://'.$this->getSourcePath($path1), 'localceph://'.$this->getSourcePath($path2));
+                return copy($this->getSourcePath($path1), $this->getSourcePath($path2));
             } else {
-                return copy('localceph://'.$this->getSourcePath($path1), 'localceph://'.$this->getSourcePath($path2));
+                return copy($this->getSourcePath($path1), $this->getSourcePath($path2));
             }
         }
         
@@ -198,11 +201,11 @@ if (\OC_Util::runningOnWindows()) {
                 $path = $path.'/';
             }
             
-            return fopen('localceph://'.$this->getSourcePath($path), $mode);
+            return fopen($this->getSourcePath($path), $mode);
         }
         
         public function hash($type, $path, $raw = false) {
-            return hash_file($type, 'localceph://'.$this->getSourcePath($path), $raw);
+            return hash_file($type, $this->getSourcePath($path), $raw);
         }
         
         public function free_space($path) {
@@ -273,7 +276,7 @@ if (\OC_Util::runningOnWindows()) {
 
         public function getSourcePath($path) {
             $fullPath = $this->datadir . $path;
-            return $fullPath;
+            return 'localceph://'.$fullPath;
         }
 		   
 		   /**
@@ -312,12 +315,12 @@ if (\OC_Util::runningOnWindows()) {
          */
 
         public function copyFromStorage(\OCP\Files\Storage $sourceStorage, $sourceInternalPath, $targetInternalPath) {
-            if($sourceStorage->instanceOfStorage('\OC\Files\Storage\Local')){
+            if($sourceStorage->instanceOfStorage('\OC\Files\Storage\CephLocal')){
                 /**
                  * @var \OC\Files\Storage\Local $sourceStorage
                  */
 
-                $rootStorage = new Local(['datadir' => '/']);
+                $rootStorage = new CephLocal(['datadir' => '/']);
                 return $rootStorage->copy($sourceStorage->getSourcePath($sourceInternalPath), $this->getSourcePath($targetInternalPath));
             } else {
                 return parent::copyFromStorage($sourceStorage, $sourceInternalPath, $targetInternalPath);
@@ -332,11 +335,11 @@ if (\OC_Util::runningOnWindows()) {
          */
 
         public function moveFromStorage(\OCP\Files\Storage $sourceStorage, $sourceInternalPath, $targetInternalPath) {
-            if ($sourceStorage->instanceOfStorage('\OC\Files\Storage\Local')) {
+            if ($sourceStorage->instanceOfStorage('\OC\Files\Storage\CephLocal')) {
             /**
              * @var \OC\Files\Storage\Local $sourceStorage
              */
-                $rootStorage = new Local(['datadir' => '/']);
+                $rootStorage = new CephLocal(['datadir' => '/']);
                 return $rootStorage->rename($sourceStorage->getSourcePath($sourceInternalPath), $this->getSourcePath($targetInternalPath));
             } else {
                 return parent::moveFromStorage($sourceStorage, $sourceInternalPath, $targetInternalPath);
