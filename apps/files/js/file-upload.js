@@ -213,7 +213,7 @@ OC.Upload = {
 			//avoid drop folder conflict error
 			//check relativepath before check conflict
                         var relativePath = upload.files[0].relativePath;
-                        relativePath = (relativePath == "" || relativePath == null) ? true : false;
+                        relativePath = (relativePath === "" || relativePath === null) ? true : false;
 			if (fileInfo && relativePath) {
 				conflicts.push([
 					// original
