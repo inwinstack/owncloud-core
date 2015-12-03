@@ -90,8 +90,12 @@
 </table>
 <input type="hidden" name="dir" id="dir" value="" />
 <div class="hiddenuploadfield">
-	<input type="file" id="file_upload_start" class="hiddenuploadfield" name="files[]"
-		data-url="<?php print_unescaped(OCP\Util::linkTo('files', 'ajax/upload.php')); ?>" />
+<!--[if IE 9]> 
+<input type="file" id="file_upload_start" name="files[]"
+        data-url="<?php print_unescaped(OCP\Util::linkTo('files', 'ajax/upload.php')); ?>" />
+<![endif]-->
+        <input type="file" id="file_upload_start" name="files[]"
+               data-url="<?php p(OC_Helper::linkToRemote('webdav')); ?>" data-type="PUT"/>
 </div>
 <div id="editor"></div><!-- FIXME Do not use this div in your app! It is deprecated and will be removed in the future! -->
 <div id="uploadsize-message" title="<?php p($l->t('Upload too large'))?>">
