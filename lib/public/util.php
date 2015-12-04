@@ -669,4 +669,12 @@ class Util {
 	public static function needUpgrade() {
 		return \OC_Util::needUpgrade(\OC::$server->getConfig());
 	}
+        public static function getUserUsedSpace($userName = Null){
+	    return \OC_Util::getUserUsedSpace($userName);
+ 
+	}
+
+	public static function getPoolMaxAvailSpace($poolName){
+	    return \OC_Util::getPoolMaxAvailSpace($poolName);
+	}
 }

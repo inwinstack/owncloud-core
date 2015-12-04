@@ -26,7 +26,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
  */
-
+use OC\Files\Stream\LocalCephStream;
 
 class OC_FileChunking {
 	protected $info;
@@ -108,6 +108,52 @@ class OC_FileChunking {
 		}
 
 		return $count;
+	}
+
+        /**
+	 * Combine the chunks into the file specified by the path.
+	 * Chunks are deleted afterwards.
+	 *
+	 * @param string $f target path
+	 *
+	 * @return integer assembled file size
+	 *
+	 * @throws \OC\InsufficientStorageException when file could not be fully
+	 * assembled due to lack of free space
+	 */
+	public function combine($filePath) {
+	    //expect $filePath = '/sm8-setup.exe.ocTransferId3590290505.part'
+
+	    $cache = $this->getCache();
+	    $prefix = $this->getPrefix();
+	    $count = 1;
+	    $cacheFullPath = array();
+
+            $systemConfig = \OC::$server->getSystemConfig();
+	    $localStorageType = $systemConfig->getValue("localstoragetype","Local");
+
+	    if ($localStorageType != 'Local'){
+	        $localFilePath = \OC\Files\Filesystem::getView()->getLocalFile($filePath);
+	    }
+	    else{
+	        $localFilePath = \OC\Files\Filesystem::normalizePath(\OC\Files\Filesystem::getView()->getLocalFile($filePath));
+	    }
+	    for ($i = 0; $i < $this->info['chunkcount']; $i++) {
+
+	        $dataDir = LocalCephStream::getDataDir();
+
+	        $cachePath = $cache->getLocalFile($prefix.$i);
+
+	        $cacheFullPath[] = $cachePath;
+
+	    }
+	    // assemble cache files using localcephstream
+	    LocalCephStream::assemble_files('localceph://'.$localFilePath, $cacheFullPath);
+
+	    // count is equal to file size
+	    // TODO
+
+	    return $count;
 	}
 
 	/**
@@ -214,9 +260,16 @@ class OC_FileChunking {
 			if(!$run) {
 				return false;
 			}
+                        $systemConfig = \OC::$server->getSystemConfig();
+                        $localStorageType = $systemConfig->getValue("localstoragetype","Local");
 			$target = \OC\Files\Filesystem::fopen($path, 'w');
 			if($target) {
-				$count = $this->assemble($target);
+                                if ($localStorageType != 'Local'){
+			            $count = $this->combine($path);
+			        }
+			        else{
+			            $count = $this->assemble($target);
+			        }
 				fclose($target);
 				if(!$exists) {
 					OC_Hook::emit(
