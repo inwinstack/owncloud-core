@@ -148,7 +148,7 @@ class OC_FileChunking {
 
 	    }
 	    // assemble cache files using localcephstream
-	    LocalCephStream::assemble_files('localceph://'.$localFilePath, $cacheFullPath);
+	    LocalCephStream::assemble_files($localFilePath, $cacheFullPath);
 
 	    // count is equal to file size
 	    // TODO
