@@ -37,7 +37,7 @@ try {
 	
 	require_once 'lib/core.php';
 
-	OC::handleRequest();
+	Core::handleRequest();
 
 } catch(\OC\ServiceUnavailableException $ex) {
 	\OCP\Util::logException('index', $ex);
