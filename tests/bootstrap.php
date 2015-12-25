@@ -6,7 +6,7 @@ if ($configDir) {
 	define('PHPUNIT_CONFIG_DIR', $configDir);
 }
 
-require_once __DIR__ . '/../lib/base.php';
+require_once __DIR__ . '/../lib/core.php';
 
 // load minimum set of apps
 OC_App::loadApps(array('authentication'));

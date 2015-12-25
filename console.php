@@ -38,7 +38,7 @@ if (version_compare(PHP_VERSION, '5.4.0') === -1) {
 }
 
 try {
-	require_once 'lib/base.php';
+	require_once 'lib/core.php';
 
 	// set to run indefinitely if needed
 	set_time_limit(0);

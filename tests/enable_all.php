@@ -6,7 +6,7 @@
  * See the COPYING-README file.
  */
 
-require_once __DIR__.'/../lib/base.php';
+require_once __DIR__.'/../lib/core.php';
 
 function enableApp($app) {
 	try {

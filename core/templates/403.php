@@ -1,6 +1,6 @@
 <?php
 if(!isset($_)) {//also provide standalone error page
-	require_once '../../lib/base.php';
+	require_once '../../lib/core.php';
 	
 	$tmpl = new OC_Template( '', '403', 'guest' );
 	$tmpl->printPage();

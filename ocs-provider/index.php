@@ -19,7 +19,7 @@
  *
  */
 
-require_once('../lib/base.php');
+require_once('../lib/core.php');
 require_once(__DIR__ . '/provider.php');
 
 header('Content-Type: application/json');
