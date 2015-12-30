@@ -2,7 +2,7 @@
 /** @var $_ array */
 /** @var $l OC_L10N */
 if(!isset($_)) {//also provide standalone error page
-	require_once '../../lib/base.php';
+	require_once '../../lib/core.php';
 	
 	$tmpl = new OC_Template( '', '404', 'guest' );
 	$tmpl->printPage();

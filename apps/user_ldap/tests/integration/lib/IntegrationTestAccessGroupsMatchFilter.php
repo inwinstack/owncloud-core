@@ -24,7 +24,7 @@ namespace OCA\user_ldap\tests\integration\lib;
 use OCA\user_ldap\lib\Connection;
 use OCA\user_ldap\tests\integration\AbstractIntegrationTest;
 
-require_once __DIR__  . '/../../../../../lib/base.php';
+require_once __DIR__  . '/../../../../../lib/core.php';
 
 class IntegrationTestAccessGroupsMatchFilter extends AbstractIntegrationTest {
 

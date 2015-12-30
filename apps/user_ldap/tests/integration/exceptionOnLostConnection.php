@@ -89,7 +89,7 @@ class ExceptionOnLostConnection {
 	 * @throws Exception
 	 */
 	public function setUp() {
-		require_once __DIR__  . '/../../../../lib/base.php';
+		require_once __DIR__  . '/../../../../lib/core.php';
 		\OC_App::loadApps('user_ldap');
 
 		$ch = $this->getCurl();

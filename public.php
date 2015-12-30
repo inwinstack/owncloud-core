@@ -28,7 +28,7 @@
  */
 try {
 
-	require_once 'lib/base.php';
+	require_once 'lib/core.php';
 	if (\OCP\Util::needUpgrade()) {
 		// since the behavior of apps or remotes are unpredictable during
 		// an upgrade, return a 503 directly
