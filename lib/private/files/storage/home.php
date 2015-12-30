@@ -24,11 +24,18 @@
  */
 
 namespace OC\Files\Storage;
-
+$systemConfig = \OC::$server->getSystemConfig();
+$localStorageType = $systemConfig->getValue("localstoragetype","Local");
+if ($localStorageType == 'CephLocal'){
+    class _Local extends CephLocal{}
+}
+else {
+    class _Local extends Local{}
+}
 /**
  * Specialized version of Local storage for home directory usage
  */
-class Home extends Local implements \OCP\Files\IHomeStorage {
+class Home extends _Local implements \OCP\Files\IHomeStorage {
 	/**
 	 * @var string
 	 */
