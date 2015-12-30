@@ -26,7 +26,7 @@
  *
  */
 set_time_limit(0);
-require_once '../../lib/base.php';
+require_once '../../lib/core.php';
 
 \OCP\JSON::callCheck();
 

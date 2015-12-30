@@ -21,7 +21,7 @@
  *
  */
 
-require_once __DIR__ . '/../../../lib/base.php';
+require_once __DIR__ . '/../../../lib/core.php';
 
 /**
  * Class Test_Mount_Config_Dummy_Backend

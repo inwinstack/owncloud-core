@@ -43,7 +43,7 @@ if (version_compare(PHP_VERSION, '7.0.0') !== -1) {
 
 try {
 	
-	require_once 'lib/base.php';
+	require_once 'lib/core.php';
 
 	OC::handleRequest();
 
