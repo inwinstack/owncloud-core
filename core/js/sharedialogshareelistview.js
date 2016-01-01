@@ -137,6 +137,8 @@
 			var hasPermissionOverride = {};
 			if (shareType === OC.Share.SHARE_TYPE_GROUP) {
 				shareWithDisplayName = shareWithDisplayName + " (" + t('core', 'group') + ')';
+			} else if (shareType === OC.Share.SHARE_TYPE_SHARING_GROUP) {
+				shareWithDisplayName = shareWithDisplayName + " (" + t('core', 'sharing group') + ')';
 			} else if (shareType === OC.Share.SHARE_TYPE_REMOTE) {
 				shareWithDisplayName = shareWithDisplayName + " (" + t('core', 'remote') + ')';
 				hasPermissionOverride = {
@@ -218,11 +220,24 @@
 			if(this.configModel.areAvatarsEnabled()) {
 				this.$el.find('.avatar').each(function() {
 					var $this = $(this);
+                    var shareType = $this.closest('li').attr('data-share-type');
+                    var seed = $this.data('seed');
+                    
+                    if(shareType == OC.Share.SHARE_TYPE_SHARING_GROUP) {
+                        var id = seed.split(' ')[0];
+                        var type = seed.split(' ')[1];
+                        seed = OC.Share.findGroupNameById(id)+ ' '+type;
+                    }
+                    
 					if ($this.hasClass('imageplaceholderseed')) {
 						$this.css({width: 32, height: 32});
-						$this.imageplaceholder($this.data('seed'));
+						$this.imageplaceholder(seed);
 					} else {
-						$this.avatar($this.data('username'), 32);
+                        if(shareType == OC.Share.SHARE_TYPE_SHARING_GROUP) {
+						    $this.avatar(OC.Share.findGroupNameById($this.data('username')), 32);
+                        } else {
+                            $this.avatar($this.data('username'), 32);
+                        } 
 					}
 				});
 			}
