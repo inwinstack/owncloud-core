@@ -62,7 +62,7 @@ class Helper extends \OC\Share\Constants {
 			if (!isset($suggestedTarget)) {
 				$suggestedTarget = $itemSource;
 			}
-			if ($shareType == self::SHARE_TYPE_GROUP) {
+			if ($shareType == self::SHARE_TYPE_GROUP || $shareType == self::SHARE_TYPE_SHARING_GROUP) {
 				$target = $backend->generateTarget($suggestedTarget, false);
 			} else {
 				$target = $backend->generateTarget($suggestedTarget, $shareWith);
