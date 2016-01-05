@@ -1,0 +1,22 @@
+.bowerrc export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore
+.gitmodules export-ignore
+.idea export-ignore
+.jshintrc export-ignore
+.mailmap export-ignore
+.scrutinizer.yml export-ignore
+autotest.cmd export-ignore
+autotest-external.sh export-ignore
+autotest-hhvm.sh export-ignore
+autotest-js.sh export-ignore
+autotest.sh export-ignore
+bower.json export-ignore
+build export-ignore
+buildjsdocs.sh export-ignore
+CONTRIBUTING.md export-ignore
+COPYING-README export-ignore
+issue_template.md export-ignore
+README.md export-ignore
+tests export-ignore
+
