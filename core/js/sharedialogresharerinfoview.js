@@ -82,7 +82,16 @@
 						owner: ownerDisplayName
 					}
 				);
-			}  else {
+			} else if (this.model.getReshareType() === OC.Share.SHARE_TYPE_SHARING_GROUP) {
+				sharedByText = t(
+					'core',
+					'Shared with you and the sharing group {group} by {owner}',
+					{
+						group: OC.Share.findGroupNameById(this.model.getReshareWith()),
+						owner: ownerDisplayName
+					}
+				);
+			} else {
 				sharedByText = t(
 					'core',
 					'Shared with you by {owner}',

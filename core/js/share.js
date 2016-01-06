@@ -437,7 +437,7 @@ OC.Share = _.extend(OC.Share || {}, {
 
     getSharingGroups() {
         return $.ajax({
-            url: OC.generateUrl('/apps/sharing_group/fetch'),
+            url: OC.generateUrl('/apps/sharing_group/fetchAll'),
             type: 'GET',
             async: false
 
