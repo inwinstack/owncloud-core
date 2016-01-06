@@ -1,6 +1,6 @@
 <?php
 /**
- * @author Björn Schießle <schiessle@owncloud.com>
+ a @author Björn Schießle <schiessle@owncloud.com>
  * @author Joas Schilling <nickvergessen@owncloud.com>
  * @author Miguel Prokop <miguel.prokop@vtu.com>
  * @author Morris Jobke <hey@morrisjobke.de>
@@ -62,7 +62,7 @@ class Helper extends \OC\Share\Constants {
 			if (!isset($suggestedTarget)) {
 				$suggestedTarget = $itemSource;
 			}
-			if ($shareType == self::SHARE_TYPE_GROUP) {
+			if ($shareType == self::SHARE_TYPE_GROUP || $shareType == self::SHARE_TYPE_SHARING_GROUP) {
 				$target = $backend->generateTarget($suggestedTarget, false);
 			} else {
 				$target = $backend->generateTarget($suggestedTarget, $shareWith);
