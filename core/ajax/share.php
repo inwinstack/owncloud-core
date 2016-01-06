@@ -270,7 +270,7 @@ if (isset($_POST['action']) && isset($_POST['itemType']) && isset($_POST['itemSo
 				$shareWith = array();
 				$groups = OC_Group::getGroups((string)$_GET['search']);
 				if ($shareWithinGroupOnly) {
-					$usergroups = OC_Group::getUserGroupsv(OC_User::getUser());
+					$usergroups = OC_Group::getUserGroups(OC_User::getUser());
 					$groups = array_intersect($groups, $usergroups);
 				}
 
