@@ -3,12 +3,14 @@
 /**
  * @namespace
  */
+
 OC.Share={
 	SHARE_TYPE_USER:0,
 	SHARE_TYPE_GROUP:1,
 	SHARE_TYPE_LINK:3,
 	SHARE_TYPE_EMAIL:4,
 	SHARE_TYPE_REMOTE:6,
+    SHARE_TYPE_SHARING_GROUP:7,
 
 	/**
 	 * Regular expression for splitting parts of remote share owners:
@@ -16,11 +18,13 @@ OC.Share={
 	 * "user@anotherexample.com@example.com/path/to/owncloud
 	 */
 	_REMOTE_OWNER_REGEXP: new RegExp("^([^@]*)@(([^@]*)@)?([^/]*)([/](.*)?)?$"),
-
+     
 	/**
 	 * @deprecated use OC.Share.currentShares instead
 	 */
 	itemShares:[],
+
+    
 	/**
 	 * Full list of all share statuses
 	 */
@@ -37,6 +41,7 @@ OC.Share={
 	 * Whether the share dropdown is opened.
 	 */
 	droppedDown:false,
+
 	/**
 	 * Loads ALL share statuses from server, stores them in
 	 * OC.Share.statuses then calls OC.Share.updateIcons() to update the
@@ -49,6 +54,23 @@ OC.Share={
 	 * @param fileList file list instance, defaults to OCA.Files.App.fileList
 	 * @param callback function to call after the shares were loaded
 	 */
+   
+    SharingGroups:function() {
+        return $.ajax({
+            method: 'GET',
+            url: OC.generateUrl('/apps/sharing_group/fetchAll'),
+            async: false,
+        });
+    },
+    
+    findSharingGroupName:function(id, groups) {
+        for(var i=0; i<groups.length; i++){
+            if(groups[i].id === id) {
+                return groups[i].name;
+            }
+        }
+    },
+
 	loadIcons:function(itemType, fileList, callback) {
 		// Load all share icons
 		$.get(
@@ -292,6 +314,7 @@ OC.Share={
 	loadItem:function(itemType, itemSource) {
 		var data = '';
 		var checkReshare = true;
+        var groups = '';
 		if (typeof OC.Share.statuses[itemSource] === 'undefined') {
 			// NOTE: Check does not always work and misses some shares, fix later
 			var checkShares = true;
@@ -306,9 +329,30 @@ OC.Share={
 			}
 		}});
 
+
+        OC.Share.SharingGroups().done(function (result) {
+            groups = result;
+        });
+
+
+        if(data.shares.length != 0) {
+            $.each(data.shares, function (index, share) {
+                if(share.share_type === 7) {
+                    share.share_with_displayname = OC.Share.findSharingGroupName(share.share_with_displayname, groups);
+                }
+            });
+        } else if(data.reshare != 0) {
+            if(data.reshare.share_type === 7) {
+                data.reshare.share_with = OC.Share.findSharingGroupName(data.reshare.share_with, groups);
+            }
+        }
+
+
+
+
 		return data;
 	},
-	share:function(itemType, itemSource, shareType, shareWith, permissions, itemSourceName, expirationDate, callback, errorCallback) {
+	share:function(itemType, itemSource, shareType, shareWith, permissions, itemSourceName, expirationDate, callback) {
 		// Add a fallback for old share() calls without expirationDate.
 		// We should remove this in a later version,
 		// after the Apps have been updated.
@@ -339,15 +383,12 @@ OC.Share={
 						callback(result.data);
 					}
 				} else {
-					if (_.isUndefined(errorCallback)) {
-						var msg = t('core', 'Error');
-						if (result.data && result.data.message) {
-							msg = result.data.message;
-						}
-						OC.dialogs.alert(msg, t('core', 'Error while sharing'));
+					if (result.data && result.data.message) {
+						var msg = result.data.message;
 					} else {
-						errorCallback(result);
+						var msg = t('core', 'Error');
 					}
+					OC.dialogs.alert(msg, t('core', 'Error while sharing'));
 				}
 			}
 		);
@@ -382,6 +423,8 @@ OC.Share={
 
 			if (data.reshare.share_type == OC.Share.SHARE_TYPE_GROUP) {
 				html += t('core', 'Shared with you and the group {group} by {owner}', {group: data.reshare.share_with, owner: data.reshare.displayname_owner});
+			} else if (data.reshare.share_type == OC.Share.SHARE_TYPE_SHARING_GROUP) {
+				html += t('core', 'Shared with you and the sharing group {group} by {owner}', {group: data.reshare.share_with, owner: data.reshare.displayname_owner});
 			} else {
 				html += t('core', 'Shared with you by {owner}', {owner: data.reshare.displayname_owner});
 			}
@@ -485,28 +528,28 @@ OC.Share={
 			OC.Share.itemShares = [];
 			OC.Share.currentShares = {};
 			if (data.shares) {
-				$.each(data.shares, function(index, share) {
-					if (share.share_type == OC.Share.SHARE_TYPE_LINK) {
-						if (itemSource === share.file_source || itemSource === share.item_source) {
-							OC.Share.showLink(share.token, share.share_with, itemSource);
-						}
-					} else {
-						if (share.collection) {
-							OC.Share.addShareWith(share.share_type, share.share_with, share.share_with_displayname, share.permissions, possiblePermissions, share.mail_send, share.collection);
-						} else {
-							if (share.share_type === OC.Share.SHARE_TYPE_REMOTE) {
-								OC.Share.addShareWith(share.share_type, share.share_with, share.share_with_displayname, share.permissions, OC.PERMISSION_READ | OC.PERMISSION_UPDATE | OC.PERMISSION_CREATE, share.mail_send, false);
-							} else {
-								OC.Share.addShareWith(share.share_type, share.share_with, share.share_with_displayname, share.permissions, possiblePermissions, share.mail_send, false);
-							}
-						}
-					}
-					if (share.expiration != null) {
-						var expireDate = moment(share.expiration, 'YYYY-MM-DD').format('DD-MM-YYYY');
-						OC.Share.showExpirationDate(expireDate, share.stime);
-					}
-				});
-			}
+                $.each(data.shares, function(index, share) {
+                    if (share.share_type == OC.Share.SHARE_TYPE_LINK) {
+                        if (itemSource === share.file_source || itemSource === share.item_source) {
+                            OC.Share.showLink(share.token, share.share_with, itemSource);
+                        }
+                    } else {
+                        if (share.collection) {
+                            OC.Share.addShareWith(share.share_type, share.share_with, share.share_with_displayname, share.permissions, possiblePermissions, share.mail_send, share.collection);
+                        } else {
+                            if (share.share_type === OC.Share.SHARE_TYPE_REMOTE) {
+                                OC.Share.addShareWith(share.share_type, share.share_with, share.share_with_displayname, share.permissions, OC.PERMISSION_READ | OC.PERMISSION_UPDATE | OC.PERMISSION_CREATE, share.mail_send, false);
+                            } else {
+                                OC.Share.addShareWith(share.share_type, share.share_with, share.share_with_displayname, share.permissions, possiblePermissions, share.mail_send, false);
+                            }
+
+                        }
+                    }
+                    if (share.expiration != null) {
+                        OC.Share.showExpirationDate(share.expiration, share.stime);
+                    }
+                });
+            }
 			$('#shareWith').autocomplete({minLength: 2, delay: 750, source: function(search, response) {
 				var $loading = $('#dropdown .shareWithLoading');
 				$loading.removeClass('hidden');
@@ -587,11 +630,16 @@ OC.Share={
 				var text = item.label;
 				if (item.value.shareType === OC.Share.SHARE_TYPE_GROUP) {
 					text = text +  ' ('+t('core', 'group')+')';
+				} else if (item.value.shareType === OC.Share.SHARE_TYPE_SHARING_GROUP) {
+					text = text +  ' ('+t('core', 'sharing group')+')';
 				} else if (item.value.shareType === OC.Share.SHARE_TYPE_REMOTE) {
 					text = text +  ' ('+t('core', 'remote')+')';
 				}
 				insert.text( text );
 				if(item.value.shareType === OC.Share.SHARE_TYPE_GROUP) {
+					insert = insert.wrapInner('<strong></strong>');
+				}
+                if(item.value.shareType === OC.Share.SHARE_TYPE_SHARING_GROUP) {
 					insert = insert.wrapInner('<strong></strong>');
 				}
 				return $( "<li>" )
@@ -656,11 +704,15 @@ OC.Share={
 			share_with_displayname: shareWithDisplayName,
 			permissions: permissions
 		};
+        
 		if (shareType === OC.Share.SHARE_TYPE_GROUP) {
 			shareWithDisplayName = shareWithDisplayName + " (" + t('core', 'group') + ')';
 		}
 		if (shareType === OC.Share.SHARE_TYPE_REMOTE) {
 			shareWithDisplayName = shareWithDisplayName + " (" + t('core', 'remote') + ')';
+		}
+        if (shareType === OC.Share.SHARE_TYPE_SHARING_GROUP) {
+			shareWithDisplayName = shareWithDisplayName + " (" + t('core', 'sharing group') + ')';
 		}
 		if (!OC.Share.itemShares[shareType]) {
 			OC.Share.itemShares[shareType] = [];
@@ -736,7 +788,9 @@ OC.Share={
 			if (oc_config.enable_avatars === true) {
 				if (shareType === OC.Share.SHARE_TYPE_USER) {
 					html.find('.avatar').avatar(escapeHTML(shareWith), 32);
-				} else {
+				} else if (shareType === OC.Share.SHARE_TYPE_SHARING_GROUP) {
+					html.find('.avatar').imageplaceholder(escapeHTML(shareWithDisplayName) + ' ' + shareType);
+                } else {
 					//Add sharetype to generate different seed if there is a group and use with the same name
 					html.find('.avatar').imageplaceholder(escapeHTML(shareWith) + ' ' + shareType);
 				}
@@ -821,25 +875,6 @@ OC.Share={
 		return path.replace(/\\/g,'/').replace(/\/[^\/]*$/, '');
 	},
 	/**
-	 * Parses a string to an valid integer (unix timestamp)
-	 * @param time
-	 * @returns {*}
-	 * @internal Only used to work around a bug in the backend
-	 */
-	_parseTime: function(time) {
-		if (_.isString(time)) {
-			// skip empty strings and hex values
-			if (time === '' || (time.length > 1 && time[0] === '0' && time[1] === 'x')) {
-				return null;
-			}
-			time = parseInt(time, 10);
-			if(isNaN(time)) {
-				time = null;
-			}
-		}
-		return time;
-	},
-	/**
 	 * Displays the expiration date field
 	 *
 	 * @param {Date} date current expiration date
@@ -854,8 +889,6 @@ OC.Share={
 			minDate: minDate,
 			maxDate: null
 		};
-		// TODO: hack: backend returns string instead of integer
-		shareTime = OC.Share._parseTime(shareTime);
 		if (_.isNumber(shareTime)) {
 			shareTime = new Date(shareTime * 1000);
 		}
@@ -901,7 +934,6 @@ OC.Share={
 };
 
 $(document).ready(function() {
-
 	if(typeof monthNames != 'undefined'){
 		// min date should always be the next day
 		var minDate = new Date();
@@ -917,7 +949,6 @@ $(document).ready(function() {
 		});
 	}
 	$(document).on('click', 'a.share', function(event) {
-		event.stopPropagation();
 		if ($(this).data('item-type') !== undefined && $(this).data('item') !== undefined) {
 			var itemType = $(this).data('item-type');
 			var itemSource = $(this).data('item');
@@ -1062,10 +1093,6 @@ $(document).ready(function() {
 					$button.removeClass('hidden');
 					$button.prop('disabled', false);
 					OC.Share.showLink(data.token, null, itemSource);
-					if (data.expiration) {
-						var expireDate = moment(data.expiration, 'YYYY-MM-DD').format('DD-MM-YYYY');
-						OC.Share.showExpirationDate(expireDate);
-					}
 					$('#dropdown').trigger(new $.Event('sharesChanged', {shares: OC.Share.currentShares}));
 					OC.Share.updateIcon(itemType, itemSource);
 				});
@@ -1111,7 +1138,6 @@ $(document).ready(function() {
 
 	// Handle the Allow Public Upload Checkbox
 	$(document).on('click', '#sharingDialogAllowPublicUpload', function() {
-
 		// Gather data
 		var $dropDown = $('#dropdown');
 		var allowPublicUpload = $(this).is(':checked');
@@ -1206,16 +1232,7 @@ $(document).ready(function() {
 					OC.Share.showLink(data.token, "password set", itemSource);
 					OC.Share.updateIcon(itemType, itemSource);
 				}
-
-				if (data.expiration) {
-					var expireDate = moment(data.expiration, 'YYYY-MM-DD').format('DD-MM-YYYY');
-					OC.Share.showExpirationDate(expireDate);
-				}
 				$('#dropdown').trigger(new $.Event('sharesChanged', {shares: OC.Share.currentShares}));
-			}, function(result) {
-				$loading.addClass('hidden');
-				linkPassText.val('');
-				linkPassText.attr('placeholder', result.data.message);
 			});
 
 			if (expireDateString !== '') {
