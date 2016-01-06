@@ -1827,8 +1827,8 @@ class Share extends Constants {
 					$id = $targets[$row['id']];
 					if (isset($items[$id]) && $items[$id]['uid_owner'] == $row['uid_owner']) {
 						// Switch to group share type to ensure resharing conditions aren't bypassed
-						if ($items[$id]['share_type'] != self::SHARE_TYPE_GROUP) {
-							$items[$id]['share_type'] = self::SHARE_TYPE_GROUP;
+						if ($items[$id]['share_type'] == self::$shareTypeGroupUserUnique) {
+							$items[$id]['share_type'] = $row['share_type'];
 							$items[$id]['share_with'] = $row['share_with'];
 						}
 						// Switch ids if sharing permission is granted on only
