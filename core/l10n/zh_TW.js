@@ -124,6 +124,7 @@ OC.L10N.register(
     "Email link to person" : "將連結 email 給別人",
     "Send" : "寄出",
     "Shared with you and the group {group} by {owner}" : "由 {owner} 分享給您和 {group}",
+    "Shared with you and the sharing group {group} by {owner}" : "由 {owner} 分享給您和分享群組 {group}",
     "Shared with you by {owner}" : "{owner} 已經和您分享",
     "Shared in {item} with {user}" : "已和 {user} 分享 {item}",
     "group" : "群組",
