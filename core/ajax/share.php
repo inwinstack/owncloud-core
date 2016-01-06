@@ -62,13 +62,11 @@ if (isset($_POST['action']) && isset($_POST['itemType']) && isset($_POST['itemSo
 						(!empty($_POST['expirationDate']) ? new \DateTime((string)$_POST['expirationDate']) : null)
 					);
 
-					$response = [];
 					if (is_string($token)) {
-						$item = OCP\Share::getShareByToken($token, false);
-						$response['data'] = array('token' => $token,
-							'expiration' => $item['expiration']);
+						OC_JSON::success(array('data' => array('token' => $token)));
+					} else {
+						OC_JSON::success();
 					}
-					OC_JSON::success($response);
 				} catch (\OC\HintException $exception) {
 					OC_JSON::error(array('data' => array('message' => $exception->getHint())));
 				} catch (Exception $exception) {
@@ -234,6 +232,7 @@ if (isset($_POST['action']) && isset($_POST['itemType']) && isset($_POST['itemSo
 				} else {
 					$shares = false;
 				}
+
 				OC_JSON::success(array('data' => array('reshare' => $reshare, 'shares' => $shares)));
 			}
 			break;
@@ -271,7 +270,7 @@ if (isset($_POST['action']) && isset($_POST['itemType']) && isset($_POST['itemSo
 				$shareWith = array();
 				$groups = OC_Group::getGroups((string)$_GET['search']);
 				if ($shareWithinGroupOnly) {
-					$usergroups = OC_Group::getUserGroups(OC_User::getUser());
+					$usergroups = OC_Group::getUserGroupsv(OC_User::getUser());
 					$groups = array_intersect($groups, $usergroups);
 				}
 
@@ -351,11 +350,11 @@ if (isset($_POST['action']) && isset($_POST['itemType']) && isset($_POST['itemSo
 						break;
 					}
 				}
-
+                   
 				// allow user to add unknown remote addresses for server-to-server share
 				$backend = \OCP\Share::getBackend((string)$_GET['itemType']);
 				if ($backend->isShareTypeAllowed(\OCP\Share::SHARE_TYPE_REMOTE)) {
-					if (substr_count((string)$_GET['search'], '@') >= 1) {
+					if (substr_count((string)$_GET['search'], '@') === 1) {
 						$shareWith[] = array(
 							'label' => (string)$_GET['search'],
 							'value' => array(
@@ -364,8 +363,9 @@ if (isset($_POST['action']) && isset($_POST['itemType']) && isset($_POST['itemSo
 							)
 						);
 					}
-					$contactManager = \OC::$server->getContactsManager();
+				    $contactManager = \OC::$server->getContactsManager();
 					$addressBookContacts = $contactManager->search($_GET['search'], ['CLOUD', 'FN']);
+                    
 					foreach ($addressBookContacts as $contact) {
 						if (isset($contact['CLOUD'])) {
 							foreach ($contact['CLOUD'] as $cloudId) {
@@ -381,16 +381,18 @@ if (isset($_POST['action']) && isset($_POST['itemType']) && isset($_POST['itemSo
 					}
 				}
 
-				$sharingAutocompletion = \OC::$server->getConfig()
-					->getAppValue('core', 'shareapi_allow_share_dialog_user_enumeration', 'yes');
-
-				if ($sharingAutocompletion !== 'yes') {
-					$searchTerm = strtolower($_GET['search']);
-					$shareWith = array_filter($shareWith, function($user) use ($searchTerm) {
-						return strtolower($user['label']) === $searchTerm
-							|| strtolower($user['value']['shareWith']) === $searchTerm;
-					});
-				}
+                
+                $sharing_groups = \OCA\Sharing_Group\Data::readGroups(OC_User::getUser(), $_GET['search']);
+ 
+                foreach($sharing_groups as $group) {
+                    $shareWith[] = array(
+                        'label' => $group['name'],
+                        'value' => array(
+                            'shareType' => \OCP\Share::SHARE_TYPE_SHARING_GROUP,
+                            'shareWith' => $group['id']
+                        )
+                    );
+                }
 
 				$sorter = new \OC\Share\SearchResultSorter((string)$_GET['search'],
 														   'label',
