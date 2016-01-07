@@ -63,7 +63,7 @@ $this->create('sharing_external_add', '/external')
 
 API::register('get',
 		'/apps/files_sharing/api/v1/shares',
-		array('\OCA\Files_Sharing\API\Local', 'getAllShares'),
+		array('\OCA\Sharing_Group\API\Local', 'getAllShares'),
 		'files_sharing');
 
 API::register('post',

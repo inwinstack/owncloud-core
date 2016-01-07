@@ -213,6 +213,30 @@ class Share extends Constants {
 				}
 			}
 
+            $query = \OC_DB::prepare(
+				'SELECT `share_with`, `file_source`, `file_target`
+				FROM
+				`*PREFIX*share`
+				WHERE
+				`item_source` = ? AND `share_type` = ? AND `item_type` IN (\'file\', \'folder\')'
+			);
+			$result = $query->execute(array($source, self::SHARE_TYPE_SHARING_GROUP));
+			if (\OCP\DB::isError($result)) {
+				\OCP\Util::writeLog('OCP\Share', \OC_DB::getErrorMessage(), \OC_Log::ERROR);
+			} else {
+                
+				while ($row = $result->fetchRow()) {
+					$usersInGroup = \OCA\Sharing_Group\Data::readGroupUsers($row['share_with']);
+					$shares = array_merge($shares, $usersInGroup);
+					if ($returnUserPaths) {
+						foreach ($usersInGroup as $user) {
+							$fileTargets[(int) $row['file_source']][$user] = $row;
+						}
+					}
+				}
+			}
+
+
 			//check for public link shares
 			if (!$publicShare) {
 				$query = \OC_DB::prepare('
@@ -867,7 +891,32 @@ class Share extends Constants {
 			}
 
 			return $send;
-		} else {
+		} else if($shareType === self::SHARE_TYPE_SHARING_GROUP) {
+            if (!\OCA\Sharing_Group\Data::findGroupById($shareWith)) {
+				$message = 'Sharing %s failed, because the group %s does not exist';
+				$message_t = $l->t('Sharing %s failed, because the group %s does not exist', array($itemSourceName, $shareWith));
+				\OC_Log::write('OCP\Share', sprintf($message, $itemSourceName, $shareWith), \OC_Log::ERROR);
+				throw new \Exception($message_t);
+			}
+
+            if ($checkExists = self::getItems($itemType, $itemSource, self::SHARE_TYPE_SHARING_GROUP, $shareWith,
+				null, self::FORMAT_NONE, null, 1,true,true)) {
+				// Only allow the same share to occur again if it is the same
+				// owner and is not a group share, this use case is for increasing
+				// permissions for a specific user
+				if ($checkExists['share_type'] == $shareType) {
+					$message = 'Sharing %s failed, because this item is already shared with %s';
+					$message_t = $l->t('Sharing %s failed, because this item is already shared with %s', array($itemSourceName, \OCA\Sharing_Group\Data::getGroupName($shareWith)));
+					\OC_Log::write('OCP\Share', sprintf($message, $itemSourceName, $shareWith), \OC_Log::ERROR);
+					throw new \Exception($message_t);
+				}
+            }
+            $group = $shareWith;
+			$shareWith = array();
+			$shareWith['group'] = $group;
+			$shareWith['users'] = array_diff(\OCA\Sharing_Group\Data::readGroupUsers($group), array($uidOwner));
+
+        }  else {
 			// Future share types need to include their own conditions
 			$message = 'Share type %s is not valid for %s';
 			$message_t = $l->t('Share type %s is not valid for %s', array($shareType, $itemSource));
@@ -1001,6 +1050,10 @@ class Share extends Constants {
 				if (\OC_Group::inGroup($uid, $share['share_with'])) {
 					$groupShare = $share;
 				}
+			} elseif((int)$share['share_type'] === \OCP\Share::SHARE_TYPE_SHARING_GROUP) {
+                if(\OCA\Sharing_Group\Data::inGroup($uid, $share['share_with'])) {
+                    $groupShare = $share;
+                }
 			} elseif ((int)$share['share_type'] === self::$shareTypeGroupUserUnique &&
 				$share['share_with'] === $uid) {
 				$uniqueGroupShare = $share;
@@ -1615,12 +1668,23 @@ class Share extends Constants {
 				$queryArgs[] = self::$shareTypeGroupUserUnique;
 				$queryArgs[] = $shareWith;
 				$groups = \OC_Group::getUserGroups($shareWith);
+                $sharing_groups = \OCA\Sharing_Group\Data::readUserGroups($shareWith); 
+
 				if (!empty($groups)) {
 					$placeholders = join(',', array_fill(0, count($groups), '?'));
 					$where .= ' OR (`share_type` = ? AND `share_with` IN ('.$placeholders.')) ';
 					$queryArgs[] = self::SHARE_TYPE_GROUP;
 					$queryArgs = array_merge($queryArgs, $groups);
 				}
+
+                if(!empty($sharing_groups)) {
+                    $placeholders = join(',', array_fill(0, count($sharing_groups), '?'));
+					$where .= ' OR (`share_type` = ? AND `share_with` IN ('.$placeholders.')) ';
+					$queryArgs[] = self::SHARE_TYPE_SHARING_GROUP;
+					$queryArgs = array_merge($queryArgs, $sharing_groups);
+
+                }
+
 				$where .= ')';
 				// Don't include own group shares
 				$where .= ' AND `uid_owner` != ?';
@@ -1725,8 +1789,23 @@ class Share extends Constants {
 			if ($fileDependent && !self::isFileReachable($row['path'], $row['storage_id'])) {
 				continue;
 			}
-			if ($row['share_type'] == self::$shareTypeGroupUserUnique && isset($items[$row['parent']])) {
+			if ($row['share_type'] == self::$shareTypeGroupUserUnique && isset($items[$row['parent']]) && $items[$row['parent']]['share_type'] == self::SHARE_TYPE_GROUP) {
 				$row['share_type'] = self::SHARE_TYPE_GROUP;
+				$row['unique_name'] = true; // remember that we use a unique name for this user
+				$row['share_with'] = $items[$row['parent']]['share_with'];
+				// if the group share was unshared from the user we keep the permission, otherwise
+				// we take the permission from the parent because this is always the up-to-date
+				// permission for the group share
+				if ($row['permissions'] > 0) {
+					$row['permissions'] = $items[$row['parent']]['permissions'];
+				}
+				// Remove the parent group share
+				unset($items[$row['parent']]);
+				if ($row['permissions'] == 0) {
+					continue;
+				}
+			} else if($row['share_type'] == self::$shareTypeGroupUserUnique && isset($items[$row['parent']]) && $items[$row['parent']]['share_type'] == self::SHARE_TYPE_SHARING_GROUP) {
+				$row['share_type'] = self::SHARE_TYPE_SHARING_GROUP;
 				$row['unique_name'] = true; // remember that we use a unique name for this user
 				$row['share_with'] = $items[$row['parent']]['share_with'];
 				// if the group share was unshared from the user we keep the permission, otherwise
@@ -1748,8 +1827,8 @@ class Share extends Constants {
 					$id = $targets[$row['id']];
 					if (isset($items[$id]) && $items[$id]['uid_owner'] == $row['uid_owner']) {
 						// Switch to group share type to ensure resharing conditions aren't bypassed
-						if ($items[$id]['share_type'] != self::SHARE_TYPE_GROUP) {
-							$items[$id]['share_type'] = self::SHARE_TYPE_GROUP;
+						if ($items[$id]['share_type'] == self::$shareTypeGroupUserUnique) {
+							$items[$id]['share_type'] = $row['share_type'];
 							$items[$id]['share_with'] = $row['share_with'];
 						}
 						// Switch ids if sharing permission is granted on only
@@ -2066,7 +2145,39 @@ class Share extends Constants {
 				'expiration'		=> $expirationDate,
 			);
 
-		} else {
+		} else if($shareType == self::SHARE_TYPE_SHARING_GROUP) {
+            $isGroupShare = true;
+            if(isset($shareWith['users'])) {
+                $users = $shareWith['users'];
+            } else {
+                $users = \OCA\Sharing_Group\Data::readGroupUsers($shareWith['group']);
+            }
+            
+            if(in_array(\OCP\User::getUser(),$users)) {
+                unset($users[array_search(\OCP\User::getUser(), $users)]);
+            }
+            $groupItemTarget = Helper::generateTarget($itemType, $itemSource,
+				$shareType, $shareWith['group'], $uidOwner, $suggestedItemTarget);
+            $groupFileTarget = Helper::generateTarget($itemType, $itemSource,
+				$shareType, $shareWith['group'], $uidOwner, $filePath);
+			// add group share to table and remember the id as parent
+			$queriesToExecute['groupShare'] = array(
+				'itemType'			=> $itemType,
+				'itemSource'		=> $itemSource,
+				'itemTarget'		=> $groupItemTarget,
+				'shareType'			=> $shareType,
+				'shareWith'			=> $shareWith['group'],
+				'uidOwner'			=> $uidOwner,
+				'permissions'		=> $permissions,
+				'shareTime'			=> time(),
+				'fileSource'		=> $fileSource,
+				'fileTarget'		=> $groupFileTarget,
+				'token'				=> $token,
+				'parent'			=> $parent,
+				'expiration'		=> $expirationDate,
+			);
+            
+        } else {
 			$users = array($shareWith);
 			$itemTarget = Helper::generateTarget($itemType, $itemSource, $shareType, $shareWith, $uidOwner,
 				$suggestedItemTarget);

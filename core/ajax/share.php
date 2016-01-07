@@ -258,6 +258,9 @@ if (isset($_POST['action']) && isset($_POST['itemType']) && isset($_POST['itemSo
 			}
 			break;
 		case 'getItem':
+            foreach(\OCA\Sharing_Group\Data::findAllGroup() as $group) {
+                $sharing_groups[$group['id']] = $group['name'];
+            }
 			if (isset($_GET['itemType'])
 				&& isset($_GET['itemSource'])
 				&& isset($_GET['checkReshare'])
@@ -281,6 +284,13 @@ if (isset($_POST['action']) && isset($_POST['itemType']) && isset($_POST['itemSo
 						null,
 						true
 					);
+                    
+                    foreach($shares as $index => $share) {
+                        if($share['share_type'] === OCP\Share::SHARE_TYPE_SHARING_GROUP) {
+                            $share['share_with_displayname'] = $sharing_groups[$share['share_with_displayname']];
+                            $shares[$index] = $share; 
+                        }
+                    }
 				} else {
 					$shares = false;
 				}
@@ -320,6 +330,7 @@ if (isset($_POST['action']) && isset($_POST['itemType']) && isset($_POST['itemSo
 				$shareWithinGroupOnly = OC\Share\Share::shareWithGroupMembersOnly();
 				$shareWith = array();
 				$groups = OC_Group::getGroups((string)$_GET['search']);
+                $sharing_groups = OCA\Sharing_Group\Data::readGroups(OC_User::getUser(), (string)$_GET['search']);
 				if ($shareWithinGroupOnly) {
 					$usergroups = OC_Group::getUserGroups(OC_User::getUser());
 					$groups = array_intersect($groups, $usergroups);
@@ -327,6 +338,7 @@ if (isset($_POST['action']) && isset($_POST['itemType']) && isset($_POST['itemSo
 
 				$sharedUsers = [];
 				$sharedGroups = [];
+				$sharedSharingGroups = [];
 				if (isset($_GET['itemShares'])) {
 					if (isset($_GET['itemShares'][OCP\Share::SHARE_TYPE_USER]) &&
 					    is_array($_GET['itemShares'][OCP\Share::SHARE_TYPE_USER])) {
@@ -335,7 +347,11 @@ if (isset($_POST['action']) && isset($_POST['itemType']) && isset($_POST['itemSo
 
 					if (isset($_GET['itemShares'][OCP\Share::SHARE_TYPE_GROUP]) &&
 					    is_array($_GET['itemShares'][OCP\Share::SHARE_TYPE_GROUP])) {
-						$sharedGroups = isset($_GET['itemShares'][OCP\Share::SHARE_TYPE_GROUP]);
+						$sharedGroups = $_GET['itemShares'][OCP\Share::SHARE_TYPE_GROUP];
+					}
+                    if (isset($_GET['itemShares'][OCP\Share::SHARE_TYPE_SHARING_GROUP]) &&
+					    is_array($_GET['itemShares'][OCP\Share::SHARE_TYPE_SHARING_GROUP])) {
+						$sharedSharingGroups = $_GET['itemShares'][OCP\Share::SHARE_TYPE_SHARING_GROUP];
 					}
 				}
 
@@ -393,6 +409,29 @@ if (isset($_POST['action']) && isset($_POST['itemType']) && isset($_POST['itemSo
 								'value' => array(
 									'shareType' => OCP\Share::SHARE_TYPE_GROUP,
 									'shareWith' => $group
+								)
+							);
+							$count++;
+						}
+					} else {
+						break;
+					}
+				}
+                foreach ($sharing_groups as $group) {
+					if (in_array($group['id'], $sharedSharingGroups)) {
+						continue;
+					}
+
+					if ($count < $request_limit) {
+						if (!isset($_GET['itemShares'])
+							|| !isset($_GET['itemShares'][OCP\Share::SHARE_TYPE_SHARING_GROUP])
+							|| !is_array((string)$_GET['itemShares'][OCP\Share::SHARE_TYPE_SHARING_GROUP])
+							|| !in_array($group['id'], (string)$_GET['itemShares'][OCP\Share::SHARE_TYPE_SHARING_GROUP])) {
+							$shareWith[] = array(
+								'label' => $group['name'],
+								'value' => array(
+									'shareType' => OCP\Share::SHARE_TYPE_SHARING_GROUP,
+									'shareWith' => $group['id']
 								)
 							);
 							$count++;

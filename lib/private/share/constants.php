@@ -31,6 +31,7 @@ class Constants {
 	const SHARE_TYPE_EMAIL = 4;   // ToDo Check if it is still in use otherwise remove it
 	const SHARE_TYPE_CONTACT = 5; // ToDo Check if it is still in use otherwise remove it
 	const SHARE_TYPE_REMOTE = 6;  // ToDo Check if it is still in use otherwise remove it
+	const SHARE_TYPE_SHARING_GROUP = 7;  // ToDo Check if it is still in use otherwise remove it
 
 	const FORMAT_NONE = -1;
 	const FORMAT_STATUSES = -2;
