@@ -1535,11 +1535,19 @@ class OC_Util {
 	    //return ['admin':'2.8 MB']/['admin':'0 B']
 
 	    $getUserUsedSizeArray = array();
-	    $sql = "SELECT `numeric_id`, `uid`, `size`
-                    FROM `*PREFIX*storages`, `*PREFIX*users`, `*PREFIX*filecache`
-                    WHERE `*PREFIX*filecache`.`path` = ?
-                    AND `*PREFIX*filecache`.`storage` =  `*PREFIX*storages`.`numeric_id`
-                    AND `*PREFIX*storages`.`id` LIKE CONCAT('%',`*PREFIX*users`.`uid`,'/')
+	    $sql = "SELECT `*PREFIX*users`.`uid`,
+                    CASE WHEN `*PREFIX*storages`.`numeric_id` is NULL
+                    THEN NULL
+                    ELSE `*PREFIX*storages`.`numeric_id`
+                    END AS numeric_id,
+                    CASE WHEN `*PREFIX*filecache`.`size` is NULL
+                    THEN 0
+                    ELSE `*PREFIX*filecache`.`size`
+                    END AS size
+                    FROM `*PREFIX*users`
+                    LEFT OUTER JOIN `*PREFIX*storages` ON `*PREFIX*storages`.`id` LIKE CONCAT(  '%',  `*PREFIX*users`.`uid` )
+                    LEFT OUTER JOIN `*PREFIX*filecache` ON `*PREFIX*storages`.`numeric_id` = `*PREFIX*filecache`.`storage`
+                    AND `*PREFIX*filecache`.`path` = ?
                    ";
 	    if(!$userName){
 	        $query = \OC_DB::prepare($sql);
