@@ -412,9 +412,15 @@ class LocalCephStream {
      */
     private function savePartsInfo() {
         
-        rados_write_full(LocalCephStream::getRadosCtx(),
+        $writeResult = rados_write_full(LocalCephStream::getRadosCtx(),
                          $this->oid,
                          json_encode($this->partsInfo));
+        if($writeResult){
+            \OCP\Util::writeLog('localcephstream',"Write $this->oid object success.", \OCP\Util::INFO);
+        }
+        else{
+            \OCP\Util::writeLog('localcephstream',"Write $this->oid object failed.", \OCP\Util::INFO);
+        }
     }
 
     /** 
@@ -471,8 +477,13 @@ class LocalCephStream {
             // create oid and save the cache to a new part object
 
             $partID = $this->partsInfo[$this->partIndex][0];
-            rados_aio_write_full(LocalCephStream::getRadosCtx(), $partID,$comp,$this->cache);
-            
+            $writeResult = rados_aio_write_full(LocalCephStream::getRadosCtx(), $partID,$comp,$this->cache);
+            if($writeResult){
+                \OCP\Util::writeLog('localcephstream',"Write $partID object success.", \OCP\Util::INFO);
+            }
+            else{
+                \OCP\Util::writeLog('localcephstream',"Write $partID object failed.", \OCP\Util::INFO);
+            }
             // update parts info
             $this->partsInfo[$this->partIndex] = [$partID, strlen($this->cache)];
 
@@ -640,10 +651,15 @@ class LocalCephStream {
             }
 
             // create folder object
-            rados_write_full($ioctx,
+            $writeResult = rados_write_full($ioctx,
                              $folderName,
                              json_encode(array()));
-
+            if($writeResult){
+                \OCP\Util::writeLog('localcephstream',"Write $folderName object success.", \OCP\Util::INFO);
+            }
+            else{
+                \OCP\Util::writeLog('localcephstream',"Write $folderName object failed.", \OCP\Util::INFO);
+            }
 
         } else {
             // if folder existed
@@ -653,9 +669,16 @@ class LocalCephStream {
             if (rados_stat($ioctx, dirname($folderName).'/')) {
 
                 // create folder object
-                rados_write_full($ioctx,
+                $writeResult = rados_write_full($ioctx,
                                  $folderName,
                                  json_encode(array()));
+
+                if($writeResult){
+                    \OCP\Util::writeLog('localcephstream',"Write $folderName object success.", \OCP\Util::INFO);
+                }
+                else{
+                    \OCP\Util::writeLog('localcephstream',"Write $folderName object failed.", \OCP\Util::INFO);
+                }
 
                 // update parent folder metadata
                 $this->oid = $folderName;
@@ -674,9 +697,16 @@ class LocalCephStream {
                     while($tmpFolder != $rootOid);
 
                     // create folder object
-                    rados_write_full($ioctx,
+                    $writeResult = rados_write_full($ioctx,
                     $folderName,
                     json_encode(array()));
+
+                    if($writeResult){
+                        \OCP\Util::writeLog('localcephstream',"Write $folderName object success.", \OCP\Util::INFO);
+                    }
+                    else{
+                        \OCP\Util::writeLog('localcephstream',"Write $folderName object failed.", \OCP\Util::INFO);
+                    }
 
                     // update parent folder metadata
                     $this->oid = $folderName;
@@ -735,7 +765,14 @@ class LocalCephStream {
             $content = self::readObject($soid);
 
             // write to new object
-            rados_write_full($ioctx, $toid, $content);
+            $writeResult = rados_write_full($ioctx, $toid, $content);
+
+            if($writeResult){
+                \OCP\Util::writeLog('localcephstream',"Write $toid object success.", \OCP\Util::INFO);
+            }
+            else{
+                \OCP\Util::writeLog('localcephstream',"Write $toid object failed.", \OCP\Util::INFO);
+            }
 
             // set xattrs to new object
             $fSize = intval(rados_getxattr(LocalCephStream::getRadosCtx(), $soid,'fileSize',24 ));
@@ -757,7 +794,15 @@ class LocalCephStream {
             $items = rados_getxattrs($ioctx,
                                      $soid);
 
-            rados_write_full($ioctx, $toid, json_encode(array()));
+            $writeResult = rados_write_full($ioctx, $toid, json_encode(array()));
+
+            if($writeResult){
+                \OCP\Util::writeLog('localcephstream',"Write $toid object success.", \OCP\Util::INFO);
+            }
+            else{
+                \OCP\Util::writeLog('localcephstream',"Write $toid object failed.", \OCP\Util::INFO);
+            }
+
             foreach ($items as $name => $value) {
 
                 $opts = array('localceph'=>array('renameDown'=>true));
@@ -771,7 +816,15 @@ class LocalCephStream {
             }
         }
         // delete old object
-        rados_remove($ioctx, $soid);
+        $removeResult = rados_remove($ioctx, $soid);
+
+        if($removeResult){
+            \OCP\Util::writeLog('localcephstream',"Remove $soid object success.", \OCP\Util::INFO);
+        }
+        else{
+            \OCP\Util::writeLog('localcephstream',"Remove $soid object failed.", \OCP\Util::INFO);
+        }
+
         clearstatcache($streamPathFrom);
         // update parent folder meta if this is level 1
         if ( !array_key_exists('localceph', $optArray) || !array_key_exists('renameDown', $optArray['localceph'])) {
@@ -822,14 +875,29 @@ class LocalCephStream {
                     rmdir($fPath);
 
                     //delete folder object
-                    rados_remove(LocalCephStream::getRadosCtx(), $this->oid);
+                    $removeResult = rados_remove(LocalCephStream::getRadosCtx(), $this->oid);
+
+                    if($removeResult){
+                        \OCP\Util::writeLog('localcephstream',"Remove $this->oid object success.", \OCP\Util::INFO);
+                    }
+                    else{
+                        \OCP\Util::writeLog('localcephstream',"Remove $this->oid object failed.", \OCP\Util::INFO);
+                    }
+
                 } else {
                     unlink($fPath);
                 }
             }
         }
         // delete itself
-        rados_remove(LocalCephStream::getRadosCtx(), $this->oid);
+        $removeResult = rados_remove(LocalCephStream::getRadosCtx(), $this->oid);
+
+        if($removeResult){
+            \OCP\Util::writeLog('localcephstream',"Remove $this->oid object success.", \OCP\Util::INFO);
+        }
+        else{
+            \OCP\Util::writeLog('localcephstream',"Remove $this->oid object failed.", \OCP\Util::INFO);
+        }
 
         // update metadata in parent folder object
         $this->updateFSMeta('delete', 'dir');
@@ -976,7 +1044,14 @@ class LocalCephStream {
                 }
                 if(!empty($this->partsInfo)){
                     foreach ($this->partsInfo as $i){
-                        rados_remove(LocalCephStream::getRadosCtx(), $i[0]);
+                        $removeResult = rados_remove(LocalCephStream::getRadosCtx(), $i[0]);
+
+                        if($removeResult){
+                            \OCP\Util::writeLog('localcephstream',"Remove $i[0] object success.", \OCP\Util::INFO);
+                        }
+                        else{
+                            \OCP\Util::writeLog('localcephstream',"Remove $i[0] object failed.", \OCP\Util::INFO);
+                        }
                     }
                     $this->partsInfo = array();
                 }
@@ -1255,17 +1330,17 @@ class LocalCephStream {
      * @return bool Return TRUE if the position was updated, FALSE otherwise.
      */
     public function stream_seek($offset, $whence = SEEK_SET) {
-        
+
         switch ($whence) {
         case SEEK_SET:
             // if ($offset < $this->position && $offset >= 0) {
             if ($offset <= $this->fSize) {
                 $this->position = $offset;
-                
+
                 // update cache according new position
                 $this->loadPartsInfo();
                 $this->loadPartsCache();
-                
+
                 return true;
             } else {
                 return false;
@@ -1275,7 +1350,7 @@ class LocalCephStream {
         case SEEK_CUR:
             if ($this->position + $offset <= $this->fSize) {
                 $this->position += $offset;
-                
+
                 // update cache according new position
                 $this->loadPartsInfo();
                 $this->loadPartsCache();
@@ -1328,21 +1403,20 @@ class LocalCephStream {
     private function updateFileLockStatus($httpCode,$data,$sessionID){
         
         while($this->retryCount<$this->maxReTrycount){
-        
+
             if ($httpCode == 200){
                 $lockResult = $this->consul -> updateKeyValue($this->fileId, $data,$sessionID);
             }
-            
+
             else{
                 $lockResult = $this->consul -> createKeyValue($this->fileId, $data,$sessionID);
             }
-            
-            
+
             if ($lockResult['httpCode'] == 200){
                 $this->retryCount = 0;
                 return true;
             }
-            
+
             elseif($lockResult['httpCode'] == 500){
                 
                 if ($this->renewLocalhostSessionID() === false){
@@ -1578,7 +1652,7 @@ class LocalCephStream {
                 }
                 $this->fileType = 'file';
                 $this->oid = self::pathToOid($info['fullPath'], $this->fileType);
-                
+
                 // save file size as an object attribute
                 rados_setxattr( LocalCephStream::getRadosCtx(),
                 $this->oid,
@@ -1636,12 +1710,26 @@ class LocalCephStream {
         // remove file parts objects
         if ($this->partsInfo != Null){
 	        foreach ($this->partsInfo as $i) {
-	            rados_remove($ioctx, $i[0]);
+	            $removeResult = rados_remove($ioctx, $i[0]);
+
+	            if($removeResult){
+	                \OCP\Util::writeLog('localcephstream',"Remove $i[0] object success.", \OCP\Util::INFO);
+	            }
+	            else{
+	                \OCP\Util::writeLog('localcephstream',"Remove $i[0] object failed.", \OCP\Util::INFO);
+	            }
 	        }
         }
         $fSize = intval(rados_getxattr(LocalCephStream::getRadosCtx(), $this->oid,'fileSize',24 ));
         // remove file object
-        rados_remove($ioctx, $this->oid);
+        $removeResult = rados_remove($ioctx, $this->oid);
+
+        if($removeResult){
+            \OCP\Util::writeLog('localcephstream',"Remove $this->oid object success.", \OCP\Util::INFO);
+        }
+        else{
+            \OCP\Util::writeLog('localcephstream',"Remove $this->oid object failed.", \OCP\Util::INFO);
+        }
 
         // update metadata in parent folder object
         $this->updateFSMeta('delete', 'file');
@@ -1676,15 +1764,28 @@ class LocalCephStream {
             $tFileMeta = array_merge($tFileMeta, json_decode($fileMeta, true));
     
             // remove source file metadata object
-            rados_remove(LocalCephStream::getRadosCtx(), $sfoid);
+            $removeResult = rados_remove(LocalCephStream::getRadosCtx(), $sfoid);
+
+            if($removeResult){
+                \OCP\Util::writeLog('localcephstream',"Remove $sfoid object success.", \OCP\Util::INFO);
+            }
+            else{
+                \OCP\Util::writeLog('localcephstream',"Remove $sfoid object failed.", \OCP\Util::INFO);
+            }
         }
 
         // update file info of target file
         $info = self::parsePath($targetPath);
         $tfoid = self::pathToOid($info['fullPath'], 'file');
-        rados_write_full(LocalCephStream::getRadosCtx(),
+        $writeResult = rados_write_full(LocalCephStream::getRadosCtx(),
                          $tfoid, json_encode($tFileMeta));
-        
+
+        if($writeResult){
+            \OCP\Util::writeLog('localcephstream',"Write $tfoid object success.", \OCP\Util::INFO);
+        }
+        else{
+            \OCP\Util::writeLog('localcephstream',"Write $tfoid object failed.", \OCP\Util::INFO);
+        }
 
     }
 }
