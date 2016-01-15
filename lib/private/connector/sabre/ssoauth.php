@@ -2,8 +2,6 @@
 namespace OC\Connector\Sabre;
 
 class SSOAuth extends Auth {
-    const DAV_AUTHENTICATED = 'AUTHENTICATED_TO_DAV_BACKEND';
-
     protected function validateUserPass($username, $password) {
         if (\OC_User::isLoggedIn() && $this->isDavAuthenticated(\OC_User::getUser())) {
             \OC_Util::setupFS(\OC_User::getUser());
