@@ -1,7 +1,7 @@
 <?php
 namespace OC\Connector\Sabre;
 
-class WebDavAuth extends Auth {
+class SSOAuth extends Auth {
     const DAV_AUTHENTICATED = 'AUTHENTICATED_TO_DAV_BACKEND';
 
     protected function validateUserPass($username, $password) {
@@ -11,7 +11,7 @@ class WebDavAuth extends Auth {
             return true;
         } 
         else {
-            if(!\OC::$server->getUserManager()->get($username)->isEnabled()) {
+            if(\OC_User::userExists($username) && !\OC::$server->getUserManager()->get($username)->isEnabled()) {
                 return false;
             }
 
