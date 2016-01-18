@@ -819,7 +819,7 @@ class LocalCephStream {
         $removeResult = rados_remove($ioctx, $soid);
 
         if($removeResult){
-            \OCP\Util::writeLog('localcephstream',"Ceph:Remove success object:$sfoid.", \OCP\Util::INFO);
+            \OCP\Util::writeLog('localcephstream',"Ceph:Remove success object:$soid.", \OCP\Util::INFO);
         }
         else{
             \OCP\Util::writeLog('localcephstream',"Ceph:Remove failed object:$soid.", \OCP\Util::INFO);
@@ -1153,6 +1153,7 @@ class LocalCephStream {
             $this->position += $dataSize;
 
             }
+        /*
         $size = 0;
         foreach ($this->partsInfo as $record) {
             $size += $record[1];
@@ -1162,6 +1163,7 @@ class LocalCephStream {
             $this->oid,
             'fileSize',
             strval($size));
+        */
         return $dataSize;
 
     }
