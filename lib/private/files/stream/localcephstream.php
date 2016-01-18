@@ -1153,6 +1153,7 @@ class LocalCephStream {
             $this->position += $dataSize;
 
             }
+        /*
         $size = 0;
         foreach ($this->partsInfo as $record) {
             $size += $record[1];
@@ -1162,6 +1163,7 @@ class LocalCephStream {
             $this->oid,
             'fileSize',
             strval($size));
+        */
         return $dataSize;
 
     }
