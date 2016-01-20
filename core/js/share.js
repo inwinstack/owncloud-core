@@ -435,7 +435,7 @@ OC.Share = _.extend(OC.Share || {}, {
 		return path.replace(/\\/g,'/').replace(/\/[^\/]*$/, '');
 	},
 
-    getSharingGroups() {
+    getSharingGroups:function() {
         return $.ajax({
             url: OC.generateUrl('/apps/sharing_group/fetchAll'),
             type: 'GET',
