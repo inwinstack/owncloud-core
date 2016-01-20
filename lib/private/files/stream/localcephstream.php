@@ -903,13 +903,14 @@ class LocalCephStream {
                     rmdir($fPath);
 
                     //delete folder object
-                    $removeResult = rados_remove(LocalCephStream::getRadosCtx(), $this->oid);
-
-                    if ($removeResult ===true) {
-                        \OCP\Util::writeLog('localcephstream',"Ceph:Remove success object:$this->oid.", \OCP\Util::INFO);
-                    }
-                    else{
-                        \OCP\Util::writeLog('localcephstream',"Ceph:Remove failed object:$this->oid.", \OCP\Util::INFO);
+                    if (self::checkObjectExist( $this->oid)){
+                        $removeResult = rados_remove(LocalCephStream::getRadosCtx(), $this->oid);
+                        if ($removeResult ===true){
+                            \OCP\Util::writeLog('localcephstream',"Ceph:Remove success object:$this->oid.", \OCP\Util::INFO);
+                        }
+                        else{
+                            \OCP\Util::writeLog('localcephstream',"Ceph:Remove failed object:$this->oid.", \OCP\Util::INFO);
+                        }
                     }
 
                 } else {
@@ -918,13 +919,14 @@ class LocalCephStream {
             }
         }
         // delete itself
-        $removeResult = rados_remove(LocalCephStream::getRadosCtx(), $this->oid);
-
-        if ($removeResult ===true){
-            \OCP\Util::writeLog('localcephstream',"Ceph:Remove success object:$this->oid.", \OCP\Util::INFO);
-        }
-        else{
-            \OCP\Util::writeLog('localcephstream',"Ceph:Remove failed object:$this->oid.", \OCP\Util::INFO);
+        if (self::checkObjectExist( $this->oid)){
+            $removeResult = rados_remove(LocalCephStream::getRadosCtx(), $this->oid);
+            if ($removeResult ===true){
+                \OCP\Util::writeLog('localcephstream',"Ceph:Remove success object:$this->oid.", \OCP\Util::INFO);
+            }
+            else{
+                \OCP\Util::writeLog('localcephstream',"Ceph:Remove failed object:$this->oid.", \OCP\Util::INFO);
+            }
         }
 
         // update metadata in parent folder object
