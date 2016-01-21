@@ -187,7 +187,14 @@ class User implements IUser {
 			\OC::$server->getConfig()->deleteAllUserValues($this->uid);
 
 			// Delete user files in /data/
-			\OC_Helper::rmdirr(\OC_User::getHome($this->uid));
+                        $systemConfig = \OC::$server->getSystemConfig();
+                        $localStorageType = $systemConfig->getValue("localstoragetype","Local");
+                        if ($localStorageType == 'CephLocal'){
+                            \OC_Helper::cephrmdirr('localceph://'.\OC_User::getHome($this->uid));
+                        }
+                        else{
+                            \OC_Helper::rmdirr(\OC_User::getHome($this->uid));
+                        }
 
 			// Delete the users entry in the storage table
 			\OC\Files\Cache\Storage::remove('home::' . $this->uid);

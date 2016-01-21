@@ -30,13 +30,6 @@ class CephLocal extends \OC\Files\Storage\Common {
 	protected $datadir;
 	private static $connectionCountArray = array();
 	
-	private function checkObjectExist($path){
-	    if (rados_stat(LocalCephStream::getRadosCtx(),$path)){
-	        return true;
-	    }
-	    return false;
-	}
-	
 	public function __construct($arguments) {
 		if ( ! in_array("localceph", stream_get_wrappers())) {
 		        stream_wrapper_register('localceph', 'OC\Files\Stream\LocalCephStream');
