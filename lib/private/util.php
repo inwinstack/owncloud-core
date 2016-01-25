@@ -1523,15 +1523,16 @@ class OC_Util {
 			return false;
 		}
 	}
+
         /**
 	 * Get Users current total used space.
 	 *
-	 * @param string $userName
+	 * @param array $userName
 	 * @return array
 	 */
-	public static function getUserUsedSpace($userName = Null){
+	public static function getUserUsedSpace($userNameArray = Null){
 	    //if user is created,but nerver login to ownclod, it will return 0 B
-	    //expect userName format: 'admin'
+	    //expect userName format: ['admin','user1']
 	    //return ['admin':'2.8 MB']/['admin':'0 B']
 
 	    $getUserUsedSizeArray = array();
@@ -1549,19 +1550,24 @@ class OC_Util {
                     LEFT OUTER JOIN `*PREFIX*filecache` ON `*PREFIX*storages`.`numeric_id` = `*PREFIX*filecache`.`storage`
                     AND `*PREFIX*filecache`.`path` = ?
                    ";
-	    if(!$userName){
+	    if(!$userNameArray){
 	        $query = \OC_DB::prepare($sql);
 	        $result = $query->execute(array('files'));
 	    }
 	    else{
-	        $sql = $sql."AND `*PREFIX*users`.`uid` =  ?";
+	        if (!is_array($userNameArray)){
+	            return $getUserUsedSizeArray;
+	        }
+	        $tmpArray = array();
+	        foreach($userNameArray as $name){
+	            $tmpArray[] = json_encode($name);
+	        }
+	        $userQuery = join(',',$tmpArray);
+	        $sql = $sql."WHERE `*PREFIX*users`.`uid` IN ($userQuery)";
 	        $query = \OC_DB::prepare($sql);
-	        $result = $query->execute(array('files',$userName));
+	        $result = $query->execute(array('files'));
 	    }
-	    if (!$result->rowCount() > 0 && isset($userName)){
-	        $getUserUsedSizeArray[$userName] = \OC_Helper::humanFileSize(0);
-
-	    }else{
+	    if ($result->rowCount() > 0){
 	        while ($row = $result->fetchRow()) {
 	            $total_size = \OC_Helper::humanFileSize($row['size']);
 	            $getUserUsedSizeArray[$row['uid']] = $total_size;
