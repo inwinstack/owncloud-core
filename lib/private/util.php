@@ -1587,19 +1587,21 @@ class OC_Util {
 	    // If it took more than 10 second, $returnval will got code 124.
 	    exec("timeout 10 ceph df | grep $poolName.' ' |awk '{print $5}'",$output,$returnVal);
 	    if($returnVal == 0){
-	        $output = $output[0];
-	        $size = intval(substr($output,0,-1));
+                if (!empty($output)){
+                    $output = $output[0];
+                    $size = intval(substr($output,0,-1));
 
-	        switch (substr($output, -1)){
-	            case 'M':
-	                return $size*pow(1024,2);
-	            case 'G':
-	                return $size*pow(1024,3);
-	            case 'K':
-	            case 'k':
-	                return $size*1024;
-	            default:
-	                return false;
+                    switch (substr($output, -1)){
+                        case 'M':
+                            return $size*pow(1024,2);
+                        case 'G':
+                            return $size*pow(1024,3);
+                        case 'K':
+                        case 'k':
+                            return $size*1024;
+                        default:
+                            return false;
+                    }
 	        }
 	    }
 	    return false;
