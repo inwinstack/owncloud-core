@@ -670,8 +670,8 @@ class Util {
 		}		
 		return self::$needUpgradeCache;
 	}
-        public static function getUserUsedSpace($userName = Null){
-	    return \OC_Util::getUserUsedSpace($userName);
+        public static function getUserUsedSpace($userNameArray = Null){
+	    return \OC_Util::getUserUsedSpace($userNameArray);
 	}
 
 	public static function getPoolMaxAvailSpace($poolName){

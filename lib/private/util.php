@@ -1558,11 +1558,13 @@ class OC_Util {
 	        if (!is_array($userNameArray)){
 	            return $getUserUsedSizeArray;
 	        }
-	        $tmpArray = array();
-	        foreach($userNameArray as $name){
-	            $tmpArray[] = json_encode($name);
-	        }
-	        $userQuery = join(',',$tmpArray);
+
+                function sqlStringFormat($user)
+                {
+                    return("'".$user."'");
+                }
+
+	        $userQuery = join(',',array_map("sqlStringFormat", $userNameArray);
 	        $sql = $sql."WHERE `*PREFIX*users`.`uid` IN ($userQuery)";
 	        $query = \OC_DB::prepare($sql);
 	        $result = $query->execute(array('files'));
