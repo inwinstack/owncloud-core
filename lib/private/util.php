@@ -1523,15 +1523,16 @@ class OC_Util {
 			return false;
 		}
 	}
+
         /**
 	 * Get Users current total used space.
 	 *
-	 * @param string $userName
+	 * @param array $userName
 	 * @return array
 	 */
-	public static function getUserUsedSpace($userName = Null){
+	public static function getUserUsedSpace($userNameArray = Null){
 	    //if user is created,but nerver login to ownclod, it will return 0 B
-	    //expect userName format: 'admin'
+	    //expect userName format: ['admin','user1']
 	    //return ['admin':'2.8 MB']/['admin':'0 B']
 
 	    $getUserUsedSizeArray = array();
@@ -1549,19 +1550,26 @@ class OC_Util {
                     LEFT OUTER JOIN `*PREFIX*filecache` ON `*PREFIX*storages`.`numeric_id` = `*PREFIX*filecache`.`storage`
                     AND `*PREFIX*filecache`.`path` = ?
                    ";
-	    if(!$userName){
+	    if(!$userNameArray){
 	        $query = \OC_DB::prepare($sql);
 	        $result = $query->execute(array('files'));
 	    }
 	    else{
-	        $sql = $sql."AND `*PREFIX*users`.`uid` =  ?";
-	        $query = \OC_DB::prepare($sql);
-	        $result = $query->execute(array('files',$userName));
-	    }
-	    if (!$result->rowCount() > 0 && isset($userName)){
-	        $getUserUsedSizeArray[$userName] = \OC_Helper::humanFileSize(0);
+	        if (!is_array($userNameArray)){
+	            return $getUserUsedSizeArray;
+	        }
 
-	    }else{
+                function sqlStringFormat($user)
+                {
+                    return("'".$user."'");
+                }
+
+	        $userQuery = join(',',array_map("sqlStringFormat", $userNameArray);
+	        $sql = $sql."WHERE `*PREFIX*users`.`uid` IN ($userQuery)";
+	        $query = \OC_DB::prepare($sql);
+	        $result = $query->execute(array('files'));
+	    }
+	    if ($result->rowCount() > 0){
 	        while ($row = $result->fetchRow()) {
 	            $total_size = \OC_Helper::humanFileSize($row['size']);
 	            $getUserUsedSizeArray[$row['uid']] = $total_size;
@@ -1581,19 +1589,21 @@ class OC_Util {
 	    // If it took more than 10 second, $returnval will got code 124.
 	    exec("timeout 10 ceph df | grep $poolName.' ' |awk '{print $5}'",$output,$returnVal);
 	    if($returnVal == 0){
-	        $output = $output[0];
-	        $size = intval(substr($output,0,-1));
+                if (!empty($output)){
+                    $output = $output[0];
+                    $size = intval(substr($output,0,-1));
 
-	        switch (substr($output, -1)){
-	            case 'M':
-	                return $size*pow(1024,2);
-	            case 'G':
-	                return $size*pow(1024,3);
-	            case 'K':
-	            case 'k':
-	                return $size*1024;
-	            default:
-	                return false;
+                    switch (substr($output, -1)){
+                        case 'M':
+                            return $size*pow(1024,2);
+                        case 'G':
+                            return $size*pow(1024,3);
+                        case 'K':
+                        case 'k':
+                            return $size*1024;
+                        default:
+                            return false;
+                    }
 	        }
 	    }
 	    return false;
