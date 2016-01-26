@@ -1531,6 +1531,7 @@ class OC_Util {
 	 * @return array
 	 */
 	public static function getUserUsedSpace($userNameArray = Null){
+            //limit: Not support user used space of external storage for now.
 	    //if user is created,but nerver login to ownclod, it will return 0 B
 	    //expect userName format: ['admin','user1']
 	    //return ['admin':'2.8 MB']/['admin':'0 B']
@@ -1546,7 +1547,7 @@ class OC_Util {
                     ELSE `*PREFIX*filecache`.`size`
                     END AS size
                     FROM `*PREFIX*users`
-                    LEFT OUTER JOIN `*PREFIX*storages` ON `*PREFIX*storages`.`id` LIKE CONCAT(  '%',  `*PREFIX*users`.`uid` )
+                    LEFT OUTER JOIN `*PREFIX*storages` ON `*PREFIX*storages`.`id` LIKE CONCAT(  'home::',  `*PREFIX*users`.`uid` )
                     LEFT OUTER JOIN `*PREFIX*filecache` ON `*PREFIX*storages`.`numeric_id` = `*PREFIX*filecache`.`storage`
                     AND `*PREFIX*filecache`.`path` = ?
                    ";
