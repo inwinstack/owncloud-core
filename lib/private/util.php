@@ -1565,7 +1565,7 @@ class OC_Util {
                     return("'".$user."'");
                 }
 
-	        $userQuery = join(',',array_map("sqlStringFormat", $userNameArray);
+	        $userQuery = join(',',array_map("sqlStringFormat", $userNameArray));
 	        $sql = $sql."WHERE `*PREFIX*users`.`uid` IN ($userQuery)";
 	        $query = \OC_DB::prepare($sql);
 	        $result = $query->execute(array('files'));
