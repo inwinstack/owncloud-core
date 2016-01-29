@@ -523,6 +523,11 @@ class LocalCephStream {
             // update cache info
             $this->cacheHeadPos += $this->partSize;
             $this->cache = '';
+
+            rados_setxattr(LocalCephStream::getRadosCtx(),
+                            $this->oid,
+                            'mtime',
+                            strval(time()));
         }
     }
     
@@ -561,7 +566,7 @@ class LocalCephStream {
             rados_rmxattr(LocalCephStream::getRadosCtx(),
                           $dirOid,
                           $itemName);
-            
+
         } else {
             rados_setxattr(LocalCephStream::getRadosCtx(),
                           $dirOid,
@@ -592,17 +597,19 @@ class LocalCephStream {
 
         $info = self::parsePath($path);
         $oid = self::pathToOid($info['fullPath'],'dir');
-        
+
         // the folder doesn't existed
         if (!self::checkObjectExist($oid)){
             return false;
         }
-        
+
         $dirContent = rados_getxattrs(LocalCephStream::getRadosCtx(),
                 $oid);
 
         foreach ($dirContent as $name => $value) {
-            $this->dirFiles[] = basename($name);
+            if ($name != 'mtime'){
+                $this->dirFiles[] = basename($name);
+            }
         }
         return true;
     }
@@ -802,12 +809,18 @@ class LocalCephStream {
                 \OCP\Util::writeLog('localcephstream',"Ceph:Write failed object:$toid.", \OCP\Util::INFO);
             }
 
-            // set xattrs to new object
-            $fSize = intval(rados_getxattr(LocalCephStream::getRadosCtx(), $soid,'fileSize',24 ));
-            rados_setxattr( LocalCephStream::getRadosCtx(),
-                            $toid,
-                            'fileSize',
-                            strval($fSize));
+            // set xattrs to new object. Ex:fileSize,mtime
+
+            $xattrs = rados_getxattrs(LocalCephStream::getRadosCtx(),
+                    $soid);
+
+            foreach ($xattrs as $xattr => $value) {
+                rados_setxattr( LocalCephStream::getRadosCtx(),
+                                $toid,
+                                $xattr,
+                                strval($value));
+            }
+
         }
         else{
 
@@ -902,31 +915,18 @@ class LocalCephStream {
                     // recursive remove items in folder
                     rmdir($fPath);
 
-                    //delete folder object
-                    if (self::checkObjectExist( $this->oid)){
-                        $removeResult = rados_remove(LocalCephStream::getRadosCtx(), $this->oid);
-                        if ($removeResult ===true){
-                            \OCP\Util::writeLog('localcephstream',"Ceph:Remove success object:$this->oid.", \OCP\Util::INFO);
-                        }
-                        else{
-                            \OCP\Util::writeLog('localcephstream',"Ceph:Remove failed object:$this->oid.", \OCP\Util::INFO);
-                        }
-                    }
-
                 } else {
                     unlink($fPath);
                 }
             }
         }
         // delete itself
-        if (self::checkObjectExist( $this->oid)){
-            $removeResult = rados_remove(LocalCephStream::getRadosCtx(), $this->oid);
-            if ($removeResult ===true){
-                \OCP\Util::writeLog('localcephstream',"Ceph:Remove success object:$this->oid.", \OCP\Util::INFO);
-            }
-            else{
-                \OCP\Util::writeLog('localcephstream',"Ceph:Remove failed object:$this->oid.", \OCP\Util::INFO);
-            }
+        $removeResult = rados_remove(LocalCephStream::getRadosCtx(), $this->oid);
+        if ($removeResult ===true){
+            \OCP\Util::writeLog('localcephstream',"Ceph:Remove success object:$this->oid.", \OCP\Util::INFO);
+        }
+        else{
+            \OCP\Util::writeLog('localcephstream',"Ceph:Remove failed object:$this->oid.", \OCP\Util::INFO);
         }
 
         // update metadata in parent folder object
@@ -1175,10 +1175,10 @@ class LocalCephStream {
         } else {
             // save cache
             $this->saveCache();
-            
+
             // append to the cache
             $this->cache .= $data;
-             
+
             $this->partsInfo[$this->partIndex][1] += $dataSize;
             $this->position += $dataSize;
 
@@ -1312,11 +1312,19 @@ class LocalCephStream {
 
         $xattrResult = rados_getxattrs(LocalCephStream::getRadosCtx(),
                 $this->oid);
+
         if (isset($xattrResult['fileSize'])){
             $fSize = intval($xattrResult['fileSize']);
         }
         else{
             $fSize = 0;
+        }
+
+        if (isset($xattrResult['mtime'])){
+            $mtime = intval($xattrResult['mtime']);
+        }
+        else{
+            $mtime = $stat["pmtime"];
         }
 
         $data = array(
@@ -1329,8 +1337,8 @@ class LocalCephStream {
             'rdev' => $fType,
             'size' => $fSize,
             'atime' => time(),
-            'mtime' => $stat["pmtime"],
-            'ctime' => $stat["pmtime"],
+            'mtime' => $mtime,
+            'ctime' => $mtime,
             'blksize' => -1,
             'blocks' => -1,
 			);
@@ -1670,10 +1678,19 @@ class LocalCephStream {
 
             $existResult = self::checkObjectExist($info['fullPath']);
             if ($existResult){
+
                 $this->fileType = $existResult;
                 $this->oid = self::pathToOid($info['fullPath'], $this->fileType);
                 $this->loadPartsInfo();
                 $this->savePartsInfo();
+
+                if (!empty($value)){
+                    $mtime = $value[0];
+                    rados_setxattr(LocalCephStream::getRadosCtx(),
+                          $this->oid,
+                          'mtime',
+                          strval($mtime));
+                }
                 return true;
             }
             else{
@@ -1689,7 +1706,7 @@ class LocalCephStream {
                 $this->oid,
                 'fileSize',
                 '0');
-                
+
                 // update parent folder info
                 $this->updateFSMeta('create', 'file');
                 return true;
