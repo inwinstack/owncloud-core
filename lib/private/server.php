@@ -52,7 +52,7 @@ use OC\Files\Node\Root;
 use OC\Files\View;
 use OC\Http\Client\ClientService;
 use OC\Lock\DBLockingProvider;
-use OC\Lock\EhanceDBLockingProvider;
+use OC\Lock\EnhanceDBLockingProvider;
 use OC\Lock\MemcacheLockingProvider;
 use OC\Lock\NoopLockingProvider;
 use OC\Mail\Mailer;
@@ -465,8 +465,8 @@ class Server extends SimpleContainer implements IServerContainer {
 				if (!($memcache instanceof \OC\Memcache\NullCache)) {
 					return new MemcacheLockingProvider($memcache);
 				}
-                                if ($c->getConfig()->getSystemValue('ehancedblock', false)){
-				    return new EhanceDBLockingProvider($c->getDatabaseConnection(), $c->getLogger(), new TimeFactory());
+                                if ($c->getConfig()->getSystemValue('enhancedblock', false)){
+				    return new EnhanceDBLockingProvider($c->getDatabaseConnection(), $c->getLogger(), new TimeFactory());
 				}
 				return new DBLockingProvider($c->getDatabaseConnection(), $c->getLogger(), new TimeFactory());
 			}

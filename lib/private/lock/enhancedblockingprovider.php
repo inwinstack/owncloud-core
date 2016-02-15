@@ -31,7 +31,7 @@ use OCP\Lock\LockedException;
 /**
  * Locking provider that stores the locks in the database
  */
-class EhanceDBLockingProvider extends DBLockingProvider {
+class EnhanceDBLockingProvider extends DBLockingProvider {
     public function __construct(IDBConnection $connection, ILogger $logger, ITimeFactory $timeFactory) {
         $this->connection = $connection;
         $this->logger = $logger;
