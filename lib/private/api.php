@@ -353,8 +353,9 @@ class OC_API {
 		if(isset($_SERVER['PHP_AUTH_USER']) && isset($_SERVER['PHP_AUTH_PW']) ) {
 			$authUser = $_SERVER['PHP_AUTH_USER'];
 			$authPw = $_SERVER['PHP_AUTH_PW'];
-			$return = OC_User::login($authUser, $authPw);
-			if ($return === true) {
+            $authMethod = \OC::$server->getAppManager()->isInstalled("singlesignon") ? "\OCA\SingleSignOn\Util::webDavLogin" : "OC_User::login";
+			$return = call_user_func($authMethod, $authUser, $authPw);
+            if ($return === true) {
 				self::$logoutRequired = true;
 
 				// initialize the user's filesystem
