@@ -80,6 +80,8 @@
     "A valid username must be provided" : "必須提供一個有效的用戶名",
     "Error creating user" : "建立用戶時出現錯誤",
     "A valid password must be provided" : "一定要提供一個有效的密碼",
+    "Username can only use English letters(case-insensitive), Number, Baseline(_) and dot(.). But Username can't start with Baseline(_) or dot(.)." : "用戶名僅能使用英文字母(不分大小寫),數字,底線(_)以及句號(.)。但是不能使用底線(_)或是句號(.)當開頭",
+    "Groupname can only use English letters(case-insensitive), Number, Baseline(_) and dot(.). But Groupname can't start with Baseline(_) or dot(.)." : "群組名僅能使用英文字母(不分大小寫),數字,底線(_)以及句號(.)。但是不能使用底線(_)或是句號(.)當開頭",
     "__language_name__" : "__language_name__",
     "SSL root certificates" : "SSL 根憑證",
     "Everything (fatal issues, errors, warnings, info, debug)" : "全部(嚴重問題,錯誤,警告,資訊,除錯)",
