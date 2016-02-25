@@ -300,6 +300,15 @@ class UsersController extends Controller {
 				$groups = $this->subAdminFactory->getSubAdminsOfGroups($userId);
 			}
 		}
+        
+        if (preg_match("/(?=^\.|^_)|(?=\W+)(?!\.)/",$username)) {
+            return new DataResponse(
+                array(
+                    'message' => (string)$this->l10n->t('Username can only use English letters(case-insensitive), Number, Baseline(_) and dot(.). But Username can\'t start with Baseline(_) or dot(.).')
+                ),
+                Http::STATUS_CONFLICT
+            );
+        }
 
 		if ($this->userManager->userExists($username)) {
 			return new DataResponse(
