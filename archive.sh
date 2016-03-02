@@ -19,6 +19,7 @@ APPLIST=applist
 FORMAT=tar
 PREFIX=owncloud/
 VERBOSE=0
+THEMES=themes
 
 # Process command-line arguments.
 while test $# -gt 0; do
@@ -32,6 +33,12 @@ while test $# -gt 0; do
         --version )
             shift
             version=$1
+            shift
+            ;;
+
+        --theme )
+            shift
+            theme=$1
             shift
             ;;
 
@@ -76,6 +83,25 @@ tar -Af $dest $thirdparty
 logln ". done"
 
 cd $workspace
+
+# archive themes
+if [ -z $theme ]; then
+    :
+else 
+    log "Archiving theme : $theme .."
+
+    cd $THEMES/$theme
+
+    themetar=$workspace/$TMPDIR/$theme.tar
+
+    git archive --format=$FORMAT --prefix=$PREFIX$THEMES/$theme/ HEAD > $themetar
+
+    tar -Af $dest $themetar
+
+    logln ". done"
+
+    cd $workspace
+fi
 
 # archive apps
 applist=$TMPDIR/$APPLIST
