@@ -8,7 +8,7 @@ OC.L10N.register(
     "Could not authenticate to remote share, password might be wrong" : "無法驗證遠端分享，可能是密碼錯誤",
     "Storage not valid" : "儲存空間無法使用",
     "Couldn't add remote share" : "無法加入遠端分享",
-    "Shared with you" : "與您分享",
+    "Shared with you" : "與我分享",
     "Shared with others" : "與其他人分享",
     "Shared by link" : "由連結分享",
     "Nothing shared with you yet" : "目前沒有任何與您分享的內容",
