@@ -285,6 +285,7 @@ OC.L10N.register(
     "change full name" : "變更全名",
     "set new password" : "設定新密碼",
     "change email address" : "更改電子郵件地址",
-    "Default" : "預設"
+    "Default" : "預設",
+    "You have used <strong>%s</strong> of the available <strong>%s</strong>" : "您已經使用了 <strong>%s</strong>，總可用空間為 <strong>%s</strong>"
 },
 "nplurals=1; plural=0;");
