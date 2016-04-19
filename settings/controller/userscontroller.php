@@ -301,10 +301,10 @@ class UsersController extends Controller {
 			}
 		}
         
-        if (preg_match("/(?=^\.|^_)|(?=\W+)(?!\.)/",$username)) {
+        if (preg_match("/(?=^\.|^_|^\@)|(?=\W+)(?!\.)(?!\@)/",$username)) {
             return new DataResponse(
                 array(
-                    'message' => (string)$this->l10n->t('Username can only use English letters(case-insensitive), Number, Baseline(_) and dot(.). But Username can\'t start with Baseline(_) or dot(.).')
+                    'message' => (string)$this->l10n->t('Username can only use English letters(case-insensitive), Number, Baseline(_) , Dot(.) and At(@). But Username can\'t start with Baseline(_) , Dot(.) or At(@).')
                 ),
                 Http::STATUS_CONFLICT
             );
