@@ -606,6 +606,31 @@ class Share extends Constants {
 
 		$backend = self::getBackend($itemType);
 		$l = \OC::$server->getL10N('lib');
+        
+        $config = \OC::$server->getConfig();
+        $reshareble = $config->getAppValue('core', 'shareapi_allow_resharing') == 'yes' ? true : false;
+        $rule = \OC_Config::getValue('permissions');
+        if($shareType != self::SHARE_TYPE_LINK) {
+            if($itemType == 'folder' || $shareType == self::SHARE_TYPE_REMOTE) {
+                if(!$rule['create']) {
+                    $permissions -= \OCP\Constants::PERMISSION_CREATE;
+                }
+
+                if(!$rule['delete'] && $itemType == 'folder') {
+                    
+                    $permissions -= \OCP\Constants::PERMISSION_DELETE;
+                }
+            }
+
+            if(!$rule['update']) {
+                $permissions -= \OCP\Constants::PERMISSION_UPDATE;
+
+            }
+
+            if(!$rule['reshare'] && $reshareble) {
+                $permissions -= \OCP\Constants::PERMISSION_SHARE;
+            }
+        }
 
 		if ($backend->isShareTypeAllowed($shareType) === false) {
 			$message = 'Sharing %s failed, because the backend does not allow shares from type %i';
