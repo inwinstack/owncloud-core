@@ -1278,15 +1278,28 @@ class LocalCephStream {
      * @param int $flags Holds additional flags set by the streams API.
      * @return array Should return as many elements as stat() does. Unknown or unavailable values should be set to a rational value (usually 0).
      */
-	public function url_stat($path, $flags) {
-	    // expect path format: /var/www/owncloud/data/admin/
-	    // expect flags format: 2
-	    // expect path format: /var/www/owncloud/data/admin/files/b.pdf
-	    // expect flags format: 0/2
+    public function url_stat($path, $flags) {
+        // expect path format: /var/www/owncloud/data/admin/
+        // expect flags format: 2
+        // expect path format: /var/www/owncloud/data/admin/files/b.pdf
+        // expect flags format: 0/2
 		
         
         // check file type and get oid
-        
+        if (basename($path) == '.' || basename($path) == '..'){
+            if (dirname($path) == '.'){
+                $path = 'localceph://'.self::$dataDir;
+	    }
+
+            else if(basename($path) == '.'){
+                $path = dirname($path);
+            }
+
+            else if(basename($path) == '..'){
+                $path = dirname(dirname($path));
+            }
+	}
+
         $oidFile = $this->oidFiletype($path);
         
         if (!$oidFile) {
