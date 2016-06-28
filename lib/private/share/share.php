@@ -610,24 +610,30 @@ class Share extends Constants {
         $config = \OC::$server->getConfig();
         $reshareble = $config->getAppValue('core', 'shareapi_allow_resharing') == 'yes' ? true : false;
         $rule = \OC_Config::getValue('permissions');
+        $create = isset($rule['create']) ? $rule['create'] : true;
+        $delete = isset($rule['delete']) ? $rule['delete'] : true;
+        $update = isset($rule['update']) ? $rule['update'] : true;
+        $reshare = isset($rule['reshare']) ? $rule['reshare'] : true;
+
+
         if($shareType != self::SHARE_TYPE_LINK) {
             if($itemType == 'folder' || $shareType == self::SHARE_TYPE_REMOTE) {
-                if(!$rule['create']) {
+                if(!$create) {
                     $permissions -= \OCP\Constants::PERMISSION_CREATE;
                 }
 
-                if(!$rule['delete'] && $itemType == 'folder') {
+                if(!$delete && $itemType == 'folder') {
                     
                     $permissions -= \OCP\Constants::PERMISSION_DELETE;
                 }
             }
 
-            if(!$rule['update']) {
+            if(!$update) {
                 $permissions -= \OCP\Constants::PERMISSION_UPDATE;
 
             }
 
-            if(!$rule['reshare'] && $reshareble) {
+            if(!$reshare && $reshareble) {
                 $permissions -= \OCP\Constants::PERMISSION_SHARE;
             }
         }
