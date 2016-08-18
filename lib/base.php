@@ -520,7 +520,7 @@ class OC {
 		@ini_set('display_errors', 0);
 		@ini_set('log_errors', 1);
 
-		date_default_timezone_set('UTC');
+		//date_default_timezone_set('UTC');
 
 		//try to configure php to enable big file uploads.
 		//this doesn´t work always depending on the webserver and php configuration.
