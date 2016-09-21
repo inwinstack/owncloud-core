@@ -17,8 +17,21 @@ $(document).ready(function() {
 						.text(t('files_external', 'Access granted')));
 			} else {
 				var client_id = $tr.find('.configuration [data-parameter="client_id"]').val();
+
 				var client_secret = $tr.find('.configuration [data-parameter="client_secret"]')
 					.val();
+				var client_type = $tr.attr('class');
+
+				if (client_type == 'googledrive'){
+				    var redirect = location.protocol + '//' + location.host + location.pathname;
+				    var state_val = 'false';
+				}
+
+				else{
+				    var state = $tr.find('.configuration [data-parameter="state"]');
+				    var state_val = state.val();
+				    var redirect = $tr.find('.configuration [data-parameter="rollback_url"]').val();
+				}
 				if (client_id != '' && client_secret != '') {
 					var params = {};
 					window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m, key, value) {
@@ -34,11 +47,14 @@ $(document).ready(function() {
 									step: 2,
 									client_id: client_id,
 									client_secret: client_secret,
-									redirect: location.protocol + '//' + location.host + location.pathname,
+									client_type: client_type,
+									redirect: redirect,
 									code: params['code'],
+									state: state_val,
 								}, function(result) {
 									if (result && result.status == 'success') {
 										$(token).val(result.data.token);
+										$(state).val(result.data.state);
 										$(configured).val('true');
 										OCA.External.Settings.mountConfig.saveStorageConfig($tr, function(status) {
 											if (status) {
@@ -67,6 +83,14 @@ $(document).ready(function() {
 		var configured = $(this).parent().find('[data-parameter="configured"]');
 		var client_id = $(this).parent().find('[data-parameter="client_id"]').val();
 		var client_secret = $(this).parent().find('[data-parameter="client_secret"]').val();
+		var client_type = tr.attr('class');
+		if (client_type == 'googledrive'){
+		    var redirect = location.protocol + '//' + location.host + location.pathname;
+		}
+		else{
+		    var redirect = $(this).parent().find('[data-parameter="rollback_url"]').val();
+		    var state = $(this).parent().find('[data-parameter="state"]');
+		}
 		if (client_id != '' && client_secret != '') {
 			var token = $(this).parent().find('[data-parameter="token"]');
 			$.post(OC.filePath('files_external', 'ajax', 'oauth2.php'),
@@ -74,11 +98,13 @@ $(document).ready(function() {
 					step: 1,
 					client_id: client_id,
 					client_secret: client_secret,
-					redirect: location.protocol + '//' + location.host + location.pathname,
+					redirect: redirect,
+					client_type: client_type
 				}, function(result) {
 					if (result && result.status == 'success') {
 						$(configured).val('false');
 						$(token).val('false');
+						$(state).val(result.data.state);
 						OCA.External.Settings.mountConfig.saveStorageConfig(tr, function(status) {
 							window.location = result.data.url;
 						});
