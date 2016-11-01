@@ -1518,6 +1518,35 @@ class OC_Util {
 		} else {
 			return false;
 		}
-	}
+    }
 
+    public static function getTrashbinSize() {
+        if (OC_User::isLoggedIn()) {
+			$user = OC_User::getUser();
+		}
+
+        $sql =  'SELECT size FROM *PREFIX*filecache JOIN *PREFIX*storages ON *PREFIX*filecache.storage = *PREFIX*storages.numeric_id WHERE *PREFIX*filecache.path = "files_trashbin" AND *PREFIX*storages.id = ?';
+        
+        $query = \OC_DB::prepare($sql);
+        $result = $query->execute(array('home::'.$user));
+        while($row = $result->fetchRow()) {
+            return $row['size'];
+        }
+            
+    }
+
+    public static function getVersionsSize() {
+        if (OC_User::isLoggedIn()) {
+			$user = OC_User::getUser();
+		}
+
+        $sql =  'SELECT size FROM *PREFIX*filecache JOIN *PREFIX*storages ON *PREFIX*filecache.storage = *PREFIX*storages.numeric_id WHERE *PREFIX*filecache.path = "files_versions" AND *PREFIX*storages.id = ?';
+        
+        $query = \OC_DB::prepare($sql);
+        $result = $query->execute(array('home::'.$user));
+        while($row = $result->fetchRow()) {
+            return $row['size'];
+        }
+
+    }
 }
