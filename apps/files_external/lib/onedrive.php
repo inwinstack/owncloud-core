@@ -36,9 +36,10 @@ class OneDrive extends \OC\Files\Storage\Common {
 	private $onedrive_client;
 	private $id;
 	private $driveFiles;
-        private $clientId;
-        private $clientSecret;
+	private $clientId;
+	private $clientSecret;
 	private $state;
+	private $rootDir;
     
 	private static $tempFiles = array();
 
@@ -62,7 +63,16 @@ class OneDrive extends \OC\Files\Storage\Common {
                 $this->renewToken();		        
 		    }
 		    
-
+		    $owner = \OC_USER::getUser();
+		    $mountData = \OC_Mount_Config::readData($owner);
+		    $mountDataDetail = $mountData['user'][$owner];
+		    foreach ($mountDataDetail as $key => $value){
+		        if(array_key_exists(('client_id'),$value['options'])){
+		            if ($value['options']['client_id'] == $params['client_id']){
+		                $this->rootDir = str_replace('/'.$owner.'/files/',"",$key);
+		            }
+		        }
+		    }
 		} else {
 			throw new \Exception('Creating \OC\Files\Storage\OneDrive storage failed');
 		}
@@ -83,9 +93,9 @@ class OneDrive extends \OC\Files\Storage\Common {
 			$path = trim($path, '/');
 		if (isset($this->driveFiles[$path])) {
 			return $this->driveFiles[$path];
-		} else if ($path === '' || $path === '.') {
+		} else if ($path === '' || $path === '.' || $path === $this->rootDir) {
 			$root = $this->onedrive_client->fetchRoot();
-			$this->driveFiles[$path] = $root;
+			$this->driveFiles[$this->rootDir] = $root;
 			return $root;
 		} else {
 			// OneDrive SDK does not have methods for retrieving files by path
@@ -103,7 +113,7 @@ class OneDrive extends \OC\Files\Storage\Common {
 					$path .= '/'.$name;
 				}
 				if (!isset($this->driveFiles[$path])) {
-				    if (dirname($path) === '.'){
+				    if (dirname($path) === '.' || dirname($path) === $this->rootDir){
 				        $root = $this->onedrive_client->fetchRoot();
 				        $objects = $root->fetchObjects();
 				        foreach($objects as $object){
@@ -342,6 +352,10 @@ class OneDrive extends \OC\Files\Storage\Common {
 		switch ($mode) {
 			case 'r':
 			case 'rb':
+			    if ($this->filetype($path) == 'dir'){
+			        $tmpFile = \OCP\Files::tmpFile($ext);
+			        return fopen($tmpFile, $mode);
+			    }
 				$file = $this->getDriveFile($path);
 				if ($file) {
 				    $data = $file->fetchContent();
