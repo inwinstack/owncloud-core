@@ -91,7 +91,7 @@ class Storage extends Wrapper {
 	 * @return bool true if the operation succeeded, false otherwise
 	 */
 	public function unlink($path) {
-        if(preg_match('/(?:^google)::.+/',$this->storage->getId(),$array)) {
+        if(preg_match('/(?:^google|onedrive|dropbox2)::.+/',$this->storage->getId(),$array)) {
             return $this->storage->unlink($path);
         }
 
@@ -106,7 +106,7 @@ class Storage extends Wrapper {
 	 * @return bool true if the operation succeeded, false otherwise
 	 */
 	public function rmdir($path) {
-        if(preg_match('/(?:^google)::.+/',$this->storage->getId(),$array)) {
+        if(preg_match('/(?:^google|onedrive|dropbox2)::.+/',$this->storage->getId(),$array)) {
             return $this->storage->rmdir($path);
         }
 		return $this->doDelete($path, 'rmdir');
