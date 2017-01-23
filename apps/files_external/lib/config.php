@@ -288,6 +288,10 @@ class OC_Mount_Config {
 			$datadir = $config->getSystemValue('datadirectory', \OC::$SERVERROOT . '/data/');
 			$jsonFile = $config->getSystemValue('mount_file', $datadir . '/mount.json');
 		}
+                $localStorageType = \OC_Config::getValue("localstoragetype","Local");
+		if ($localStorageType == 'CephLocal'){
+		    $jsonFile = 'localceph://'.$jsonFile;
+		}
 		if (is_file($jsonFile)) {
 			$mountPoints = json_decode(file_get_contents($jsonFile), true);
 			if (is_array($mountPoints)) {
@@ -311,7 +315,10 @@ class OC_Mount_Config {
 			$datadir = $config->getSystemValue('datadirectory', \OC::$SERVERROOT . '/data/');
 			$file = $config->getSystemValue('mount_file', $datadir . '/mount.json');
 		}
-
+                $localStorageType = \OC_Config::getValue("localstoragetype","Local");
+		if ($localStorageType == 'CephLocal'){
+		    $file = 'localceph://'.$file;
+		}
 		$content = json_encode($data, JSON_PRETTY_PRINT);
 		@file_put_contents($file, $content);
 		@chmod($file, 0640);
