@@ -45,6 +45,17 @@ $allowedPermissions = \OCP\Constants::PERMISSION_ALL;
 $errorCode = null;
 
 $l = \OC::$server->getL10N('files');
+
+if (!isset($_FILES['files'])) {
+  if(!isset($_POST['action'])) {
+	  OCP\JSON::error(array('data' => array('message' => $l->t('No file was uploaded. Unknown error'))));
+	  exit();
+  } else {
+    OCP\JSON::encodedPrint(OCP\Files::buildNotExistingFileName($_POST['directory'], $_POST['originalname']));
+    exit(); 
+    } 
+}
+
 if (empty($_POST['dirToken'])) {
 	// The standard case, files are uploaded through logged in users :)
 	OCP\JSON::checkLoggedIn();
@@ -102,15 +113,13 @@ if (empty($_POST['dirToken'])) {
 	}
 }
 
+
+
 OCP\JSON::callCheck();
 
 // get array with current storage stats (e.g. max file size)
 $storageStats = \OCA\Files\Helper::buildFileStorageStatistics($dir);
 
-if (!isset($_FILES['files'])) {
-	OCP\JSON::error(array('data' => array_merge(array('message' => $l->t('No file was uploaded. Unknown error')), $storageStats)));
-	exit();
-}
 
 foreach ($_FILES['files']['error'] as $error) {
 	if ($error != 0) {
@@ -134,7 +143,11 @@ $files = $_FILES['files'];
 
 $error = false;
 
+$trashbin = \OC_Util::getTrashbinSize();
+$versions = \OC_Util::getVersionsSize();
+
 $maxUploadFileSize = $storageStats['uploadMaxFilesize'];
+$maxUploadFileSize -= ($trashbin + $versions);
 $maxHumanFileSize = OCP\Util::humanFileSize($maxUploadFileSize);
 
 $totalSize = 0;
@@ -164,14 +177,18 @@ if (\OC\Files\Filesystem::isValidPath($dir) === true) {
 		if(!empty($_POST['file_directory'])) {
 			$relativePath = '/'.$_POST['file_directory'];
 		}
-
 		// $path needs to be normalized - this failed within drag'n'drop upload to a sub-folder
 		if ($resolution === 'autorename') {
 			// append a number in brackets like 'filename (2).ext'
-			$target = OCP\Files::buildNotExistingFileName($dir . $relativePath, $files['name'][$i]);
-		} else {
-			$target = \OC\Files\Filesystem::normalizePath($dir . $relativePath.'/'.$files['name'][$i]);
-		}
+      $target = OCP\Files::buildNotExistingFileName($dir . $relativePath, $files['name'][$i]);
+
+		} else if($resolution === 'rename' &&  !empty($_POST['new_name'])) {
+      $target = \OC\Files\Filesystem::normalizePath($dir . $relativePath.'/'.$_POST['new_name']);
+
+    } else {
+      $target = \OC\Files\Filesystem::normalizePath($dir . $relativePath.'/'.$files['name'][$i]);
+      file_put_contents('ccc.txt', $dir. $relativePath);
+    }
 
 		// relative dir to return to the client
 		if (isset($publicDirectory)) {

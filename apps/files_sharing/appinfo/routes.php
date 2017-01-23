@@ -55,7 +55,11 @@ $this->create('files_sharing_ajax_publicpreview', 'ajax/publicpreview.php')
 $this->create('sharing_external_shareinfo', '/shareinfo')
 	->actionInclude('files_sharing/ajax/shareinfo.php');
 $this->create('sharing_external_add', '/external')
-	->actionInclude('files_sharing/ajax/external.php');
+    ->actionInclude('files_sharing/ajax/external.php');
+
+$this->create('sharing_permission', 'ajax/sharepermission.php')
+	->actionInclude('files_sharing/ajax/sharepermission.php');
+
 
 // OCS API
 
