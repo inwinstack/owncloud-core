@@ -5,8 +5,9 @@
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Ross Nicoll <jrn@jrn.me.uk>
  * @author Vincent Petry <pvince81@owncloud.com>
+ * @author Duncan Chiang <duncan.c@inwinstack.com>
  *
- * @copyright Copyright (c) 2015, ownCloud, Inc.
+ * @copyright Copyright (c) 2015-2016, ownCloud, Inc.
  * @license AGPL-3.0
  *
  * This code is free software: you can redistribute it and/or modify
@@ -61,6 +62,7 @@ class Application extends App {
 			$container->query('OCA\Files_External\Lib\Backend\AmazonS3'),
 			$container->query('OCA\Files_External\Lib\Backend\Dropbox'),
 			$container->query('OCA\Files_External\Lib\Backend\Google'),
+		        $container->query('OCA\Files_External\Lib\Backend\OneDrive'),
 			$container->query('OCA\Files_External\Lib\Backend\Swift'),
 			$container->query('OCA\Files_External\Lib\Backend\SFTP_Key'),
 		]);
