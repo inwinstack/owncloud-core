@@ -397,6 +397,19 @@ class Storage {
 			return $versions;
 		}
 
+        $sql = "SELECT *
+                FROM `history_files_versions`
+                WHERE  `uid`=? AND `path`=?";
+
+        $connection = \OC::$server->getDatabaseConnection();
+        $prepare = $connection->prepare($sql);
+        $prepare->execute(array($uid, $filename));
+        $result = $prepare->fetchAll();
+        $versionTimestamps = array();
+        foreach ($result as $version) {
+            $versionTimestamps[] = $version["version"];
+        }
+
 		if (is_resource($dirContent)) {
 			while (($entryName = readdir($dirContent)) !== false) {
 				if (!\OC\Files\Filesystem::isIgnoredDir($entryName)) {
@@ -409,6 +422,14 @@ class Storage {
 						$key = $timestamp . '#' . $filename;
 						$versions[$key]['version'] = $timestamp;
 						$versions[$key]['humanReadableTimestamp'] = self::getHumanReadableTimestamp($timestamp);
+
+                        if (in_array($versions[$key]["version"], $versionTimestamps)) {
+                            $versions[$key]["historic"] = true;
+                        }
+                        else {
+                            $versions[$key]["historic"] = false;
+                        }
+
 						if (empty($userFullPath)) {
 							$versions[$key]['preview'] = '';
 						} else {

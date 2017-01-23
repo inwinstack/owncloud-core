@@ -10,10 +10,7 @@
 In addition to the expiry of versions, ownCloud’s versions app makes certain never to use more than 50% of the user’s currently available free space. If stored versions exceed this limit, ownCloud will delete the oldest versions first until it meets this limit. More information is available in the Versions documentation. 
 
 	</description>
-	<version>1.1.0</version>
-	<types>
-		<filesystem/>
-	</types>
+	<version>1.2.0</version>
 	<dependencies>
 		<owncloud min-version="8.2" />
 	</dependencies>

@@ -135,6 +135,23 @@ class Helper {
 	public static function formatFileInfo(FileInfo $i) {
 		$entry = array();
 
+        if ($i["type"] == "dir") {
+            $sql = "SELECT *
+                    FROM `files_version_cleaner`
+                    WHERE  `userid`=? AND `path`=?";
+
+            $uid = \OC_User::getUser();
+            $view = new \OC\Files\View("/" . $uid . "/files");
+            $path = $view->getRelativePath($i->getPath());
+            $connection = \OC::$server->getDatabaseConnection();
+            $prepare = $connection->prepare($sql);
+            $prepare->execute(array($uid, $path));
+            $result = $prepare->fetchAll();
+            if($result){
+                $entry['versionControl'] = true;
+            }
+        }
+
 		$entry['id'] = $i['fileid'];
 		$entry['parentId'] = $i['parent'];
 		$entry['date'] = \OCP\Util::formatDate($i['mtime']);
