@@ -1265,5 +1265,59 @@
 
 	</table>
 
+        <table>
 
+		<!--
+		Table for storing transactional file locking on hosts
+		-->
+		<name>*dbprefix*host_locks</name>
+
+		<declaration>
+
+			<field>
+				<name>id</name>
+				<type>integer</type>
+				<default>0</default>
+				<notnull>true</notnull>
+				<unsigned>true</unsigned>
+				<length>4</length>
+				<autoincrement>1</autoincrement>
+			</field>
+
+			<field>
+				<name>hostname</name>
+				<type>text</type>
+				<notnull>true</notnull>
+				<length>512</length>
+			</field>
+
+			<field>
+				<name>key</name>
+				<type>text</type>
+				<notnull>true</notnull>
+				<length>64</length>
+			</field>
+
+			<index>
+				<unique>true</unique>
+				<name>lock_key_index</name>
+				<field>
+					<name>key</name>
+					<sorting>ascending</sorting>
+				</field>
+			</index>
+
+			<index>
+				<primary>true</primary>
+				<unique>true</unique>
+				<name>host_lock_id_index</name>
+				<field>
+					<name>id</name>
+					<sorting>ascending</sorting>
+				</field>
+			</index>
+
+		</declaration>
+
+	</table>
 </database>

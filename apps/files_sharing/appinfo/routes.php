@@ -72,22 +72,22 @@ API::register('get',
 
 API::register('post',
 		'/apps/files_sharing/api/v1/shares',
-		array('\OCA\Files_Sharing\API\Local', 'createShare'),
+		array('\OCA\Sharing_Group\API\Local', 'createShare'),
 		'files_sharing');
 
 API::register('get',
 		'/apps/files_sharing/api/v1/shares/{id}',
-		array('\OCA\Files_Sharing\API\Local', 'getShare'),
+		array('\OCA\Sharing_Group\API\Local', 'getShare'),
 		'files_sharing');
 
 API::register('put',
 		'/apps/files_sharing/api/v1/shares/{id}',
-		array('\OCA\Files_Sharing\API\Local', 'updateShare'),
+		array('\OCA\Sharing_Group\API\Local', 'updateShare'),
 		'files_sharing');
 
 API::register('delete',
 		'/apps/files_sharing/api/v1/shares/{id}',
-		array('\OCA\Files_Sharing\API\Local', 'deleteShare'),
+		array('\OCA\Sharing_Group\API\Local', 'deleteShare'),
 		'files_sharing');
 
 API::register('get',
@@ -121,7 +121,7 @@ API::register('delete',
 		'files_sharing');
 
 
-$sharees = new \OCA\Files_Sharing\API\Sharees(\OC::$server->getGroupManager(),
+$sharees = new \OCA\Sharing_Group\API\Sharees(\OC::$server->getGroupManager(),
                                               \OC::$server->getUserManager(),
                                               \OC::$server->getContactsManager(),
                                               \OC::$server->getConfig(),

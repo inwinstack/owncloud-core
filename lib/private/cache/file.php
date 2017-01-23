@@ -162,7 +162,18 @@ class File implements ICache {
 		}
 		return true;
 	}
-
+        /**
+	 * @param string $key
+	 * @return string
+	 */
+	public function getLocalFile($key) {
+	    $result = null;
+	    if ($this->hasKey($key)) {
+	        $storage = $this->getStorage();
+	        $result = $storage->getLocalFile($key);
+	    }
+	    return $result;
+	}
 	/**
 	 * Runs GC
 	 * @throws \OC\ForbiddenException

@@ -145,11 +145,13 @@
 			var text = item.label;
 			if (item.value.shareType === OC.Share.SHARE_TYPE_GROUP) {
 				text = text +  ' ('+t('core', 'group')+')';
+			} else if (item.value.shareType === OC.Share.SHARE_TYPE_SHARING_GROUP) {
+				text = text +  ' ('+t('core', 'sharing group')+')';
 			} else if (item.value.shareType === OC.Share.SHARE_TYPE_REMOTE) {
 				text = text +  ' ('+t('core', 'remote')+')';
 			}
 			insert.text(text);
-			if(item.value.shareType === OC.Share.SHARE_TYPE_GROUP) {
+			if(item.value.shareType === OC.Share.SHARE_TYPE_GROUP || item.value.shareType === OC.Share.SHARE_TYPE_SHARING_GROUP) {
 				insert = insert.wrapInner('<strong></strong>');
 			}
 			return $("<li>")

@@ -27,7 +27,7 @@
  *
  */
 
-
+use OC\Files\Stream\LocalCephStream;
 class OC_FileChunking {
 	protected $info;
 	protected $cache;
@@ -109,7 +109,42 @@ class OC_FileChunking {
 
 		return $count;
 	}
+        /**
+	 * Combine the chunks into the file specified by the path.
+	 * Chunks are deleted afterwards.
+	 *
+	 * @param string $f target path
+	 *
+	 * @return integer assembled file size
+	 *
+	 * @throws \OC\InsufficientStorageException when file could not be fully
+	 * assembled due to lack of free space
+	 */
+	public function combine($filePath) {
+	    //expect $filePath = '/var/www/owncloud/data/admin/files/1.php.ocTransferId0505.part'
 
+	    $cache = $this->getCache();
+	    $prefix = $this->getPrefix();
+	    $count = 1;
+	    $cacheFullPath = array();
+
+	    for ($i = 0; $i < $this->info['chunkcount']; $i++) {
+
+	        $dataDir = LocalCephStream::getDataDir();
+
+	        $cachePath = $cache->getLocalFile($prefix.$i);
+
+	        $cacheFullPath[] = $cachePath;
+
+	    }
+	    // assemble cache files using localcephstream
+	    LocalCephStream::assemble_files($filePath, $cacheFullPath);
+
+	    // count is equal to file size
+	    // TODO
+
+	    return $count;
+	}
 	/**
 	 * Returns the size of the chunks already present
 	 * @return integer size in bytes

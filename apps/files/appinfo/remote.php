@@ -43,7 +43,7 @@ $serverFactory = new \OC\Connector\Sabre\ServerFactory(
 );
 
 // Backends
-$authBackend = new \OC\Connector\Sabre\Auth();
+$authBackend = new \OC\Connector\Sabre\SSOAuth();
 $requestUri = \OC::$server->getRequest()->getRequestUri();
 
 $server = $serverFactory->createServer($baseuri, $requestUri, $authBackend, function() {
