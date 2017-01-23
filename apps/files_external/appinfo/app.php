@@ -9,8 +9,9 @@
  * @author Ross Nicoll <jrn@jrn.me.uk>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  * @author Vincent Petry <pvince81@owncloud.com>
+ * @author Duncan Chiang <duncan.c@inwinstack.com>
  *
- * @copyright Copyright (c) 2015, ownCloud, Inc.
+ * @copyright Copyright (c) 2015-2016, ownCloud, Inc.
  * @license AGPL-3.0
  *
  * This code is free software: you can redistribute it and/or modify
@@ -38,7 +39,7 @@ OC::$CLASSPATH['OC\Files\Storage\Dropbox'] = 'files_external/lib/dropbox.php';
 OC::$CLASSPATH['OC\Files\Storage\SFTP'] = 'files_external/lib/sftp.php';
 OC::$CLASSPATH['OC_Mount_Config'] = 'files_external/lib/config.php';
 OC::$CLASSPATH['OCA\Files\External\Api'] = 'files_external/lib/api.php';
-
+OC::$CLASSPATH['OC\Files\Storage\OneDrive'] = 'files_external/lib/onedrive.php';
 require_once __DIR__ . '/../3rdparty/autoload.php';
 
 // register Application object singleton
