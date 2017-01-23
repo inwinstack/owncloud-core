@@ -54,7 +54,19 @@ class Hooks {
 	 */
 	public static function write_hook( $params ) {
 
-		if (\OCP\App::isEnabled('files_versions')) {
+        if (\OCP\App::isEnabled("files_version_cleaner") && \OCP\App::isEnabled("files_versions")) {
+			$path = $params[\OC\Files\Filesystem::signal_param_path];
+            $versionFolders = \OCP\Config::getUserValue(\OC_User::getUser(), "files_version_cleaner", "folders", "[]");
+            $versionFolders = json_decode($versionFolders);
+            $temp_array = explode("/", $path);
+
+            $match = in_array("/" . $temp_array[1], $versionFolders) ? true : false;
+
+            if($path<>'' && $match) {
+                Storage::store($path);
+            }
+        }
+		else if (\OCP\App::isEnabled('files_versions')) {
 			$path = $params[\OC\Files\Filesystem::signal_param_path];
 			if($path<>'') {
 				Storage::store($path);
