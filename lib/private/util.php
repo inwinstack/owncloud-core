@@ -71,10 +71,14 @@ class OC_Util {
 		$configDataDirectory = OC_Config::getValue("datadirectory", OC::$SERVERROOT . "/data");
 		//first set up the local "root" storage
 		\OC\Files\Filesystem::initMountManager();
-		if (!self::$rootMounted) {
-			\OC\Files\Filesystem::mount('\OC\Files\Storage\Local', array('datadir' => $configDataDirectory), '/');
-			self::$rootMounted = true;
+                $localStorageType = OC_Config::getValue("localstoragetype","Local");
+		if ($localStorageType !== 'CephLocal'){
+		    $localStorageType = 'Local';
 		}
+                if (!self::$rootMounted) {
+                    \OC\Files\Filesystem::mount("\OC\Files\Storage\\$localStorageType", array('datadir' => $configDataDirectory), '/');
+                self::$rootMounted = true;
+                }
 	}
 
 	/**
@@ -1518,6 +1522,119 @@ class OC_Util {
 		} else {
 			return false;
 		}
+    }
+
+    public static function getTrashbinSize() {
+        if (OC_User::isLoggedIn()) {
+			$user = OC_User::getUser();
+		}
+
+        $sql =  'SELECT size FROM *PREFIX*filecache JOIN *PREFIX*storages ON *PREFIX*filecache.storage = *PREFIX*storages.numeric_id WHERE *PREFIX*filecache.path = "files_trashbin" AND *PREFIX*storages.id = ?';
+        
+        $query = \OC_DB::prepare($sql);
+        $result = $query->execute(array('home::'.$user));
+        while($row = $result->fetchRow()) {
+            return $row['size'];
+        }
+            
+    }
+
+    public static function getVersionsSize() {
+        if (OC_User::isLoggedIn()) {
+			$user = OC_User::getUser();
+		}
+
+        $sql =  'SELECT size FROM *PREFIX*filecache JOIN *PREFIX*storages ON *PREFIX*filecache.storage = *PREFIX*storages.numeric_id WHERE *PREFIX*filecache.path = "files_versions" AND *PREFIX*storages.id = ?';
+        
+        $query = \OC_DB::prepare($sql);
+        $result = $query->execute(array('home::'.$user));
+        while($row = $result->fetchRow()) {
+            return $row['size'];
+        }
+    }
+   /**
+	 * Get Users current total used space.
+	 *
+	 * @param array $userName
+	 * @return array
+	 */
+	public static function getUserUsedSpace($userNameArray = Null){
+            //limit: Not support user used space of external storage for now.
+	    //if user is created,but nerver login to ownclod, it will return 0 B
+	    //expect userName format: ['admin','user1']
+	    //return ['admin':'2.8 MB']/['admin':'0 B']
+
+	    $getUserUsedSizeArray = array();
+	    $sql = "SELECT `*PREFIX*users`.`uid`,
+                    CASE WHEN `*PREFIX*storages`.`numeric_id` is NULL
+                    THEN NULL
+                    ELSE `*PREFIX*storages`.`numeric_id`
+                    END AS numeric_id,
+                    CASE WHEN `*PREFIX*filecache`.`size` is NULL
+                    THEN 0
+                    ELSE `*PREFIX*filecache`.`size`
+                    END AS size
+                    FROM `*PREFIX*users`
+                    LEFT OUTER JOIN `*PREFIX*storages` ON `*PREFIX*storages`.`id` LIKE CONCAT(  'home::',  `*PREFIX*users`.`uid` )
+                    LEFT OUTER JOIN `*PREFIX*filecache` ON `*PREFIX*storages`.`numeric_id` = `*PREFIX*filecache`.`storage`
+                    AND `*PREFIX*filecache`.`path` = ?
+                   ";
+	    if(!$userNameArray){
+	        $query = \OC_DB::prepare($sql);
+	        $result = $query->execute(array('files'));
+	    }
+	    else{
+	        if (!is_array($userNameArray)){
+	            return $getUserUsedSizeArray;
+	        }
+
+                function sqlStringFormat($user)
+                {
+                    return("'".$user."'");
+                }
+
+	        $userQuery = join(',',array_map("sqlStringFormat", $userNameArray));
+	        $sql = $sql."WHERE `*PREFIX*users`.`uid` IN ($userQuery)";
+	        $query = \OC_DB::prepare($sql);
+	        $result = $query->execute(array('files'));
+	    }
+	    if ($result->rowCount() > 0){
+	        while ($row = $result->fetchRow()) {
+	            $total_size = \OC_Helper::humanFileSize($row['size']);
+	            $getUserUsedSizeArray[$row['uid']] = $total_size;
+	        }
+	    }
+	    return $getUserUsedSizeArray;
 	}
 
+	/**
+	 * Get ceph pool max available space.
+	 *
+	 * @param string $poolName
+	 * @return int/boolean
+	 */
+	public static function getPoolMaxAvailSpace($poolName){
+	    //return 3071279104
+	    // If it took more than 10 second, $returnval will got code 124.
+	    exec("timeout 10 ceph df | grep $poolName.' ' |awk '{print $5}'",$output,$returnVal);
+	    if($returnVal == 0){
+                if (!empty($output)){
+                    $output = $output[0];
+                    $size = intval(substr($output,0,-1));
+
+                    switch (substr($output, -1)){
+                        case 'M':
+                            return $size*pow(1024,2);
+                        case 'G':
+                            return $size*pow(1024,3);
+                        case 'K':
+                        case 'k':
+                            return $size*1024;
+                        default:
+                            return false;
+                    }
+	        }
+	    }
+	    return false;
+	}
 }

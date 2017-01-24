@@ -227,7 +227,7 @@ class OC_Helper {
 		}
 		$bytes = round($bytes / 1024, 0);
 		if ($bytes < 1024) {
-			return "$bytes kB";
+			return "$bytes KB";
 		}
 		$bytes = round($bytes / 1024, 1);
 		if ($bytes < 1024) {
@@ -371,7 +371,17 @@ class OC_Helper {
 
 		return !file_exists($dir);
 	}
-
+        /**
+	 * Recursive deletion of folders
+	 * @param string $dir path to the folder
+	 * @param bool $deleteSelf if set to false only the content of the folder will be deleted
+	 * @return bool
+	 */
+	static function cephrmdirr($dir, $deleteSelf = true) {
+	    rmdir($dir);
+	
+	    return !file_exists($dir);
+	}
 	/**
 	 * @return \OC\Files\Type\Detection
 	 * @deprecated 8.2.0 use \OC::$server->getMimeTypeDetector()

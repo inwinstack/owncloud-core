@@ -102,7 +102,17 @@ class GroupsController extends Controller {
 				Http::STATUS_CONFLICT
 			);
 		}
-		if($this->groupManager->createGroup($id)) {
+		
+        if (preg_match("/(?=^\.|^_)|(?=\W+)(?!\.)/",$id)) {
+            return new DataResponse(
+                array(
+                    'message' => (string)$this->l10n->t('Groupname can only use English letters(case-insensitive), Number, Baseline(_) and dot(.). But Groupname can\'t start with Baseline(_) or dot(.).')
+                ),
+                Http::STATUS_CONFLICT
+            );
+        }
+        
+        if($this->groupManager->createGroup($id)) {
 			return new DataResponse(
 				array(
 					'groupname' => $id

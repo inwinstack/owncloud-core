@@ -9,6 +9,7 @@ OC.Share = _.extend(OC.Share || {}, {
 	SHARE_TYPE_LINK:3,
 	SHARE_TYPE_EMAIL:4,
 	SHARE_TYPE_REMOTE:6,
+	SHARE_TYPE_SHARING_GROUP:7,
 
 	/**
 	 * Regular expression for splitting parts of remote share owners:
@@ -432,7 +433,29 @@ OC.Share = _.extend(OC.Share || {}, {
 	},
 	dirname:function(path) {
 		return path.replace(/\\/g,'/').replace(/\/[^\/]*$/, '');
-	}
+	},
+
+    getSharingGroups:function() {
+        return $.ajax({
+            url: OC.generateUrl('/apps/sharing_group/fetchAll'),
+            type: 'GET',
+            async: false
+
+        });
+    },
+
+    findGroupNameById:function(id) {
+        var name = '';
+        this.getSharingGroups().done(function (result) {
+            for(var i = 0; i < result.length;i++) {
+                if(result[i]['id'] === id) {
+                    name = result[i]['name'];
+                    break;
+                }
+            }
+        });
+        return name;
+    }
 });
 
 $(document).ready(function() {
