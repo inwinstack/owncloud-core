@@ -56,13 +56,11 @@ class Hooks {
 
         if (\OCP\App::isEnabled("files_version_cleaner") && \OCP\App::isEnabled("files_versions")) {
 			$path = $params[\OC\Files\Filesystem::signal_param_path];
-            $versionFolders = \OCP\Config::getUserValue(\OC_User::getUser(), "files_version_cleaner", "folders", "[]");
-            $versionFolders = json_decode($versionFolders);
-            $temp_array = explode("/", $path);
 
-            $match = in_array("/" . $temp_array[1], $versionFolders) ? true : false;
+            $dirName = dirname($path);
+            $result = \OCA\Files_version_Cleaner\DatabaseVersionCleanerHandler::read($dirName);
 
-            if($path<>'' && $match) {
+            if($path<>'' && $result != false) {
                 Storage::store($path);
             }
         }
