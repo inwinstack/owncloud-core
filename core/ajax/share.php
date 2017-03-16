@@ -389,6 +389,40 @@ if (isset($_POST['action']) && isset($_POST['itemType']) && isset($_POST['itemSo
 						}
 					}
 				}
+                                $count = 0;
+				$users = array();
+				$limit = 0;
+				$offset = 0;
+				// limit defaults to 15 if not specified via request parameter and can be no larger than 500
+				$request_limit = min((int)$_GET['limit'] ?: 15, 500);
+				while ($count < $request_limit && count($users) == $limit) {
+				    $limit = $request_limit - $count;
+				    if ($shareWithinGroupOnly) {
+				        $users = OC_Group::displayNamesInGroups($usergroups, (string)$_GET['search'].'@mail.edu.tw', $limit, $offset);
+				    } else {
+				        $users = OC_User::getDisplayNames((string)$_GET['search'].'@mail.edu.tw', $limit, $offset);
+				    }
+				
+				    $offset += $limit;
+				    foreach ($users as $uid => $displayName) {
+				        if (in_array($uid, $sharedUsers)) {
+				            continue;
+				        }
+				
+				        if ((!isset($_GET['itemShares'])
+				                || !is_array((string)$_GET['itemShares'][OCP\Share::SHARE_TYPE_USER])
+				                || !in_array($uid, (string)$_GET['itemShares'][OCP\Share::SHARE_TYPE_USER]))
+				                && $uid != OC_User::getUser()) {
+				                    $shareWith[] = array(
+				                            'label' => $displayName,
+				                            'value' => array(
+				                                    'shareType' => OCP\Share::SHARE_TYPE_USER,
+				                                    'shareWith' => $uid)
+				                    );
+				                    $count++;
+				                }
+				    }
+				}
 				$count = 0;
 
 				// enable l10n support
