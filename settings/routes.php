@@ -100,6 +100,8 @@ $this->create('settings_ajax_uninstallapp', '/settings/ajax/uninstallapp.php')
 	->actionInclude('settings/ajax/uninstallapp.php');
 $this->create('settings_ajax_navigationdetect', '/settings/ajax/navigationdetect.php')
 	->actionInclude('settings/ajax/navigationdetect.php');
+$this->create('settings_ajax_removeusergroup','/settings/ajax/removeusergroup.php')
+	->actionInclude('settings/ajax/removeusergroup.php');
 // admin
 $this->create('settings_ajax_excludegroups', '/settings/ajax/excludegroups.php')
 	->actionInclude('settings/ajax/excludegroups.php');
