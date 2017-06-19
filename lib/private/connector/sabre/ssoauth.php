@@ -15,7 +15,8 @@ class SSOAuth extends Auth {
 
             \OC_Util::setUpFS(); //login hooks may need early access to the filesystem
 
-            $authMethod = \OC::$server->getAppManager()->isInstalled("singlesignon") ? "\OCA\SingleSignOn\Util::webDavLogin" : "\OC_User::login";
+            //$authMethod = \OC::$server->getAppManager()->isInstalled("singlesignon") ? "\OCA\SingleSignOn\Util::webDavLogin" : "\OC_User::login";
+            $authMethod = \OC::$server->getAppManager()->isInstalled("auth_filter") ? "\OCA\Auth_Filter\Util::webDavLogin" : "\OC_User::login";
 
             if(call_user_func($authMethod, $username, $password)) {
                 $ocUser = \OC_User::getUser();

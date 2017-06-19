@@ -353,7 +353,8 @@ class OC_API {
 		if(isset($_SERVER['PHP_AUTH_USER']) && isset($_SERVER['PHP_AUTH_PW']) ) {
 			$authUser = $_SERVER['PHP_AUTH_USER'];
 			$authPw = $_SERVER['PHP_AUTH_PW'];
-            $authMethod = \OC::$server->getAppManager()->isInstalled("singlesignon") ? "\OCA\SingleSignOn\Util::webDavLogin" : "OC_User::login";
+            //$authMethod = \OC::$server->getAppManager()->isInstalled("singlesignon") ? "\OCA\SingleSignOn\Util::webDavLogin" : "OC_User::login";
+                        $authMethod = \OC::$server->getAppManager()->isInstalled("auth_filter") ? "\OCA\Auth_Filter\Util::webDavLogin" : "\OC_User::login";
 			$return = call_user_func($authMethod, $authUser, $authPw);
             if ($return === true) {
 				self::$logoutRequired = true;
