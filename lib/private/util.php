@@ -1536,6 +1536,7 @@ class OC_Util {
         while($row = $result->fetchRow()) {
             return $row['size'];
         }
+        return 0;
             
     }
 
@@ -1551,6 +1552,7 @@ class OC_Util {
         while($row = $result->fetchRow()) {
             return $row['size'];
         }
+        return 0;
     }
    /**
 	 * Get Users current total used space.
