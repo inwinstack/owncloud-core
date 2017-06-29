@@ -60,6 +60,8 @@ $application->registerRoutes($this, [
 /** @var $this \OCP\Route\IRouter */
 
 // Settings pages
+$this->create('settings_system', '/settings/system')
+->actionInclude('settings/system.php');
 $this->create('settings_help', '/settings/help')
 	->actionInclude('settings/help.php');
 $this->create('settings_personal', '/settings/personal')
