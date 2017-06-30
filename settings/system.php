@@ -25,7 +25,8 @@
 OC_Util::checkLoggedIn();
 function add_title(){
     $l = \OC::$server->getL10N('settings');
-    $title = $l->t('System Information') . ' - ' . OC_Theme::getTitle();
+    $theme = new OC_Theme();
+    $title = $l->t('System Information') . ' - ' . $theme->getTitle();
     return $title;
 }
 // Load the files we need
