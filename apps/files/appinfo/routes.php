@@ -81,3 +81,9 @@ $this->create('download', 'download{file}')
 	->requirements(array('file' => '.*'))
 	->actionInclude('files/download.php');
 
+\OCP\API::register('get',
+        '/apps/files/api/v1/checkloginstatus',
+        function($urlParameters) {
+            return new \OC_OCS_Result(array(\OC_User::isLoggedIn()));
+        },
+        'files',\OCP\API::GUEST_AUTH);
