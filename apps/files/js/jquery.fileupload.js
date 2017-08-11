@@ -42,7 +42,8 @@
     // The FileReader API is not actually used, but works as feature detection,
     // as e.g. Safari supports XHR file uploads via the FormData API,
     // but not non-multipart XHR file uploads:
-    $.support.xhrFileUpload = !!(window.XMLHttpRequestUpload && window.FileReader);
+    $.support.xhrFileUpload = (!window.XMLHttpRequestUpload) ? !!(new XMLHttpRequest() && window.FileReader) :
+	!!(window.XMLHttpRequestUpload && window.FileReader);
     $.support.xhrFormDataFileUpload = !!window.FormData;
 
     // Detect support for Blob slicing (required for chunked uploads):

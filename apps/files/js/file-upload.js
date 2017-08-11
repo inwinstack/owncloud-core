@@ -118,7 +118,20 @@ OC.Upload = {
 	 * @param {object} data
 	 */
 	onCancel:function(data) {
-		this.cancelUploads();
+		if(data){
+                 if(data.type === 'PUT'){
+                      if(typeof data.files[0].relativePath !== 'undefined'){
+                              data.url += '&replace=cancel';
+                        }
+                      else{
+                              data.url += '?replace=cancel';
+                        }
+                         data.submit();
+                 }
+		}
+		else{
+			this.cancelUploads();
+		}
 	},
 	/**
 	 * callback for the conflicts dialog
@@ -151,7 +164,18 @@ OC.Upload = {
 	 */
 	onSkip:function(data) {
 		this.log('skip', null, data);
-		this.deleteUpload(data);
+                if(data.type == 'PUT'){
+                      if(typeof data.files[0].relativePath !== 'undefined'){
+                              data.url += '&replace=oringin';
+                        }
+                      else{
+                              data.url += '?replace=oringin';
+                        }
+                       data.submit();
+                }
+	 	else{
+			this.deleteUpload(data);
+	        }
 	},
 	/**
 	 * handle replacing a file on the server with an uploaded file
@@ -159,7 +183,13 @@ OC.Upload = {
 	 */
 	onReplace:function(data) {
 		this.log('replace', null, data);
-		if (data.data) {
+		if (data.url === undefined){
+                        data.url = data.fileInput[0].attributes[3].value + data.files[0].name + '?file=true';
+		}
+                else if (data.type === 'PUT') {
+			data.files[0].relativePath !== undefined ? data.url += '&replace=true': data.url += '?replace=true'
+                }
+		else if (data.data) {
 			data.data.append('resolution', 'replace');
 		} else {
 			if (!data.formData) {
@@ -257,6 +287,7 @@ OC.Upload = {
 				dropZone: $('#content'), // restrict dropZone to content div
 				autoUpload: false,
 				sequentialUploads: true,
+				multipart: false,
 				//singleFileUploads is on by default, so the data.files array will always have length 1
 				/**
 				 * on first add of every selection
@@ -436,6 +467,20 @@ OC.Upload = {
 						file_directory: fileDirectory
 					});
 				},
+				send: function (e, data) {
+              				if(data.type === 'PUT'){
+                				var urlParameter = data.url.split('?');
+                				if(urlParameter[1] == undefined){
+                        				var dir = '';
+                        				dir = FileList.getCurrentDirectory();
+                        				var path = dir;
+                        				data.url = data.url + path + '/' + data.files[0].name ;
+                        				if(data.files[0].relativePath !== undefined){
+                                				data.url += '?relativePath=' + data.files[0].relativePath.slice(0,-1);
+                        				}
+                				}
+              				}
+      				},
 				fail: function(e, data) {
 					OC.Upload.log('fail', e, data);
 					if (typeof data.textStatus !== 'undefined' && data.textStatus !== 'success' ) {
