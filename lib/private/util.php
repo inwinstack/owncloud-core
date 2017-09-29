@@ -1527,7 +1527,22 @@ class OC_Util {
     public static function getTrashbinSize() {
         if (OC_User::isLoggedIn()) {
 			$user = OC_User::getUser();
-		}
+	}
+        else{
+            if (array_key_exists('dirToken',$_POST)){
+                $token = $_POST['dirToken'];
+                $query = \OC_DB::prepare('SELECT * FROM `*PREFIX*share` WHERE `token` = ?', 1);
+                $result = $query->execute(array($token));
+                if (\OC_DB::isError($result)) {
+                        \OCP\Util::writeLog('OCP\Share', \OC_DB::getErrorMessage() . ', token=' . $token, \OCP\Util::ERROR);
+                }
+                $row = $result->fetchRow();
+                if ($row === false) {
+                        return false;
+                }
+                $user = $row['uid_owner'];
+            }
+        }
 
         $sql =  'SELECT size FROM *PREFIX*filecache JOIN *PREFIX*storages ON *PREFIX*filecache.storage = *PREFIX*storages.numeric_id WHERE *PREFIX*filecache.path = "files_trashbin" AND *PREFIX*storages.id = ?';
         
@@ -1543,8 +1558,22 @@ class OC_Util {
     public static function getVersionsSize() {
         if (OC_User::isLoggedIn()) {
 			$user = OC_User::getUser();
-		}
-
+	}
+        else{
+            if (array_key_exists('dirToken',$_POST)){
+                $token = $_POST['dirToken'];
+                $query = \OC_DB::prepare('SELECT * FROM `*PREFIX*share` WHERE `token` = ?', 1);
+                $result = $query->execute(array($token));
+                if (\OC_DB::isError($result)) {
+                        \OCP\Util::writeLog('OCP\Share', \OC_DB::getErrorMessage() . ', token=' . $token, \OCP\Util::ERROR);
+                }
+                $row = $result->fetchRow();
+                if ($row === false) {
+                        return false;
+                }
+                $user = $row['uid_owner'];
+            }
+        }
         $sql =  'SELECT size FROM *PREFIX*filecache JOIN *PREFIX*storages ON *PREFIX*filecache.storage = *PREFIX*storages.numeric_id WHERE *PREFIX*filecache.path = "files_versions" AND *PREFIX*storages.id = ?';
         
         $query = \OC_DB::prepare($sql);
