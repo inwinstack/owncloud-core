@@ -1542,6 +1542,7 @@ class OC_Util {
                 }
                 $user = $row['uid_owner'];
             }
+            else{$user === false;}
         }
 
         $sql =  'SELECT size FROM *PREFIX*filecache JOIN *PREFIX*storages ON *PREFIX*filecache.storage = *PREFIX*storages.numeric_id WHERE *PREFIX*filecache.path = "files_trashbin" AND *PREFIX*storages.id = ?';
@@ -1573,6 +1574,7 @@ class OC_Util {
                 }
                 $user = $row['uid_owner'];
             }
+            else{$user === false;}
         }
         $sql =  'SELECT size FROM *PREFIX*filecache JOIN *PREFIX*storages ON *PREFIX*filecache.storage = *PREFIX*storages.numeric_id WHERE *PREFIX*filecache.path = "files_versions" AND *PREFIX*storages.id = ?';
         
