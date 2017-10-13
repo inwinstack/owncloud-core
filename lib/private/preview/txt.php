@@ -63,7 +63,7 @@ class TXT extends Provider {
 
 		$fontFile  = __DIR__;
 		$fontFile .= '/../../../core';
-		$fontFile .= '/fonts/OpenSans-Regular.ttf';
+		$fontFile .= '/fonts/setofont.ttf';
 
 		$canUseTTF = function_exists('imagettftext');
 
