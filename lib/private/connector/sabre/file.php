@@ -161,6 +161,19 @@ class File extends Node implements IFile {
 				if ($needsPartFile) {
 					$partStorage->unlink($internalPartPath);
 				}
+                                if (!$this->fileView->file_exists('/'.ltrim($this->path, '/'))){
+                                    $selectSql = "SELECT `fileid` FROM `*PREFIX*filecache` JOIN  `*PREFIX*storages`
+                                            ON `*PREFIX*filecache`.`storage` = `*PREFIX*storages`.`numeric_id` WHERE
+                                            `*PREFIX*storages`.`id` = ? AND `*PREFIX*filecache`.`path` = ?
+                                           ";
+                                    $query = \OC_DB::prepare($selectSql);
+                                    $result = $query->execute(array($partStorage->getId(),'files/'.ltrim($this->path, '/')));
+                                    while($row = $result->fetchRow()) {
+                                        $sql = "DELETE FROM `*PREFIX*filecache` WHERE `fileid` = ?";
+                                        $query = \OC_DB::prepare($sql);
+                                        $query->execute(array($row['fileid']));
+                                    }
+                                }
 				throw new FileLocked($e->getMessage(), $e->getCode(), $e);
 			}
 
@@ -265,6 +278,13 @@ class File extends Node implements IFile {
 		try {
 			$res = $this->fileView->fopen(ltrim($this->path, '/'), 'rb');
 			if ($res === false) {
+                                if (!$this->fileView->file_exists('/'.ltrim($this->path, '/'))){
+                                    $sql = "DELETE FROM `*PREFIX*filecache` WHERE `fileid` = ?";
+                                    $query = \OC_DB::prepare($sql);
+                                    $result = $query->execute(array($this->getId()));
+                                    list($storage, $internalPath) = $this->fileView->resolvePath(ltrim($this->path, '/'));
+                                    $storage->unlink(ltrim($this->path, '/'));
+                                }
 				throw new ServiceUnavailable("Could not open file");
 			}
 			return $res;

@@ -430,6 +430,19 @@ class LocalCephStream {
         $fileMeta = self::readObject($this->oid);
         
         $this->partsInfo = json_decode($fileMeta, true);
+        $this->notExistobject = array();
+        if (is_array($this->partsInfo)){
+            foreach ($this->partsInfo as $indexArray){
+                if(!$this->checkObjectExist($indexArray[0]) && $indexArray[1] !=0){
+                    $this->notExistobject[] = $indexArray[0];
+                }
+            }
+        }
+        if (!empty($this->notExistobject)){
+           return false;
+           //throw new \Exception ('localcephsteam!!!!!loadpartinfo');
+        }
+        return true;
         
     }
 
@@ -1024,7 +1037,12 @@ class LocalCephStream {
                 $this->writable = false;
             }
             // load partsInfo
-            $this->loadPartsInfo();
+            $result = $this->loadPartsInfo();
+            if(!$result){
+                  $this->unlink($path);
+               //throw new \Exception('!!!!!!!!localcephstream');
+                  return false;
+            }
             $this->position = 0;
             break;
         case 'a':
@@ -1311,6 +1329,17 @@ class LocalCephStream {
             $fType = $oidFile[1];
             
             if ($fType == 'file') {
+                $fileMeta = self::readObject($this->oid);
+
+                $partsInfo = json_decode($fileMeta, true);
+                if (is_array($partsInfo)){
+                    foreach ($partsInfo as $indexArray){
+                        if(!$this->checkObjectExist($indexArray[0]) && $indexArray[1] != 0){
+                            $this->unlink($path);
+                            return false;
+                        }
+                    }
+                }
                 $mode = self::MODE_FILE | 0777;
                 $nlink = 1;
             } else {
