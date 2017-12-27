@@ -162,6 +162,14 @@ class File extends Node implements IFile {
 					$partStorage->unlink($internalPartPath);
 				}
                                 if (!$this->fileView->file_exists('/'.ltrim($this->path, '/'))){
+
+                                    $key = 'files/' . md5($partStorage->getId() . '::files/' . trim($this->path, '/'));
+                                    $user = \OC_User::getUser();
+                                    $unlockSql = "UPDATE `*PREFIX*file_locks` SET `lock`=0 WHERE `key` = ?";
+                                    $query = \OC_DB::prepare($unlockSql);
+                                    \OCP\Util::writeLog('WEBDAV',"The $user's $this->path is not normal when uploading.", \OCP\Util::ERROR);
+                                    $query->execute(array($key));
+
                                     $selectSql = "SELECT `fileid` FROM `*PREFIX*filecache` JOIN  `*PREFIX*storages`
                                             ON `*PREFIX*filecache`.`storage` = `*PREFIX*storages`.`numeric_id` WHERE
                                             `*PREFIX*storages`.`id` = ? AND `*PREFIX*filecache`.`path` = ?
@@ -279,6 +287,8 @@ class File extends Node implements IFile {
 			$res = $this->fileView->fopen(ltrim($this->path, '/'), 'rb');
 			if ($res === false) {
                                 if (!$this->fileView->file_exists('/'.ltrim($this->path, '/'))){
+                                    $user = \OC_User::getUser();
+                                    \OCP\Util::writeLog('WEBDAV',"The $user's $this->path is not normal when downloading!", \OCP\Util::ERROR);
                                     $sql = "DELETE FROM `*PREFIX*filecache` WHERE `fileid` = ?";
                                     $query = \OC_DB::prepare($sql);
                                     $result = $query->execute(array($this->getId()));
