@@ -49,11 +49,13 @@ if(!empty($_POST["account"]) || !empty($_POST["password"])) {
                             $redirectHost= $result['ocs']['data']['host'];
                         }
                         else if ($result['ocs']['data']['host'] === false){
+                            \OCP\Util::writeLog("TANet_Auth", "The userID($userid) auth successed, but has not permission.", \OCP\Util::INFO);
                             $msg = "您沒有權限使用儲存應用服務!";
                             break;
                         }
                     }
                     else{
+                        \OCP\Util::writeLog("TANet_Auth", "The storage api return not normal status.", \OCP\Util::INFO);
                         $msg = "儲存雲驗證失敗";
                         break;
                     }
