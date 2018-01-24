@@ -88,7 +88,7 @@ if(!empty($_POST["account"]) || !empty($_POST["password"])) {
                     $msg = "帳號不存在或密碼錯誤";
                     break;
                 default:
-                    \OCP\Util::writeLog("TANet_Auth", "Waiting tanet auth server response timeout from $agent.", \OCP\Util::INFO);
+                    \OCP\Util::writeLog("TANet_Auth", "The userID($userid) waiting tanet auth server response timeout from $agent.", \OCP\Util::INFO);
                     $msg = "TANet 主機回傳錯誤 : ". radius_strerror($res);
                     break;
             }
