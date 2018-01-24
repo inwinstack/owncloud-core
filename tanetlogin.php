@@ -20,6 +20,7 @@ if(!empty($_POST["account"]) || !empty($_POST["password"])) {
                     $msg = "儲存雲尚未設置TANet主機相關參數";
         }else{
             require_once 'lib/base.php';
+            $agent = \OCA\Activity_Logging\UserHooks::checkAgent();
 
             $radserver = $CONFIG['radius_server'];
             $radport = $CONFIG['radius_port'];
@@ -49,13 +50,13 @@ if(!empty($_POST["account"]) || !empty($_POST["password"])) {
                             $redirectHost= $result['ocs']['data']['host'];
                         }
                         else if ($result['ocs']['data']['host'] === false){
-                            \OCP\Util::writeLog("TANet_Auth", "The userID($userid) auth successed, but has not permission.", \OCP\Util::INFO);
+                            \OCP\Util::writeLog("TANet_Auth", "The userID($userid) has not access permission fom $agent.", \OCP\Util::INFO);
                             $msg = "您沒有權限使用儲存應用服務!";
                             break;
                         }
                     }
                     else{
-                        \OCP\Util::writeLog("TANet_Auth", "The storage api return not normal status.", \OCP\Util::INFO);
+                        \OCP\Util::writeLog("TANet_Auth", "The storage api return not normal status when the userID($userid) login from $agent.", \OCP\Util::INFO);
                         $msg = "儲存雲驗證失敗";
                         break;
                     }
@@ -79,15 +80,15 @@ if(!empty($_POST["account"]) || !empty($_POST["password"])) {
                     $queryStr = "?" . http_build_query($params);
 
                     $redirectUrl = 'https://' . $redirectHost . '/index.php' . $queryStr;
-                    \OCP\Util::writeLog("TANet_Auth", "The userID($userid) auth successed. Redirecting......", \OCP\Util::INFO);
+                    \OCP\Util::writeLog("TANet_Auth", "The userID($userid) auth successed from $agent. Redirecting......", \OCP\Util::INFO);
                     header('location:' . $redirectUrl);
                     exit();
                 case RADIUS_ACCESS_REJECT:
-                    \OCP\Util::writeLog("TANet_Auth", "The userID($userid) auth failed.", \OCP\Util::INFO);
+                    \OCP\Util::writeLog("TANet_Auth", "The userID($userid) auth failed from $agent.", \OCP\Util::INFO);
                     $msg = "帳號不存在或密碼錯誤";
                     break;
                 default:
-                    \OCP\Util::writeLog("TANet_Auth", "Waiting tanet auth server response timeout.", \OCP\Util::INFO);
+                    \OCP\Util::writeLog("TANet_Auth", "Waiting tanet auth server response timeout from $agent.", \OCP\Util::INFO);
                     $msg = "TANet 主機回傳錯誤 : ". radius_strerror($res);
                     break;
             }
