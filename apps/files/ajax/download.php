@@ -50,4 +50,7 @@ if(isset($_GET['downloadStartSecret'])
 	setcookie('ocDownloadStarted', $_GET['downloadStartSecret'], time() + 20, '/');
 }
 
+$downloadFiles = json_encode( array('folder' => $dir, 'files' => $files_list) );
+\OCP\Util::writeLog('core',\OCA\Activity_Logging\UserHooks::formatLogMessage(\OC_User::getDisplayName(), "downloaded $downloadFiles"), \OCP\Util::INFO);
+
 OC_Files::get($dir, $files_list, $_SERVER['REQUEST_METHOD'] == 'HEAD');
