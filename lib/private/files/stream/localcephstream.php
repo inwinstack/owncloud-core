@@ -1802,7 +1802,7 @@ class LocalCephStream {
 	        foreach ($this->partsInfo as $i) {
 	            $removeResult = rados_remove($ioctx, $i[0]);
 
-	            if ($removeResult ===true) {
+	            if ($removeResult ===true || !rados_stat(LocalCephStream::getRadosCtx(),$i[0])) {
 	                \OCP\Util::writeLog('localcephstream',"Ceph:Remove success object:$i[0].", \OCP\Util::INFO);
 	            }
 	            else{
