@@ -210,7 +210,11 @@ OC.Upload = {
 		// only keep non-conflicting uploads
 		selection.uploads = _.filter(selection.uploads, function(upload) {
 			var fileInfo = fileList.findFile(upload.files[0].name);
-			if (fileInfo) {
+			//avoid drop folder conflict error
+			//check relativepath before check conflict
+                        var relativePath = upload.files[0].relativePath;
+                        relativePath = (relativePath === "" || relativePath === null || relativePath === undefined) ? true : false;
+			if (fileInfo && relativePath) {
 				conflicts.push([
 					// original
 					_.extend(fileInfo, {
